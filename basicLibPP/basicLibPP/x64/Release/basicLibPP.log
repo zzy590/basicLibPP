@@ -1,0 +1,76 @@
+﻿生成启动时间为 2014/3/26 20:08:25。
+     1>项目“V:\basicLibPP\basicLibPP\basicLibPP.vcxproj”在节点 2 上(build 个目标)。
+     1>InitializeBuildStatus:
+         正在创建“x64\Release\basicLibPP.unsuccessfulbuild”，因为已指定“AlwaysCreate”。
+       ClCompile:
+         D:\VS2010\VC\bin\x86_amd64\CL.exe /c /Zi /nologo /W3 /WX- /O2 /Oi /GL /D WIN32 /D NDEBUG /D _WINDOWS /D _USRDLL /D BASICLIBPP_EXPORTS /D _WINDLL /Gm- /EHa /MT /GS /Gy /fp:precise /Zc:wchar_t /Zc:forScope /Fo"x64\Release\\" /Fd"x64\Release\vc100.pdb" /Gd /TP /errorReport:prompt DisEng\dis_decode.cc DisEng\dis_groups.cc DisEng\dis_out.cpp DisEng\resolve.cc DisEng\syntax.cc GeneralHook\hook_mgr.cpp HandleInfo\HndInfo.cpp HashTree\md5_tree.cpp HookLib\Hook.cpp SignVerify\sign_verify.cpp basic_fun.cpp fileSystem\fileBypass.cpp fileSystem\fileMap.cpp log\logSystem.cpp main.cpp memlib\fast_allocator.cpp out_test.cpp ps_conn\ps_conn.cpp tlsSelector\tlsSesector.cpp tray\tray.cpp
+         dis_decode.cc
+         dis_groups.cc
+         dis_out.cpp
+         resolve.cc
+         syntax.cc
+         hook_mgr.cpp
+         HndInfo.cpp
+         md5_tree.cpp
+         Hook.cpp
+         sign_verify.cpp
+         basic_fun.cpp
+         fileBypass.cpp
+         fileMap.cpp
+         logSystem.cpp
+         main.cpp
+         fast_allocator.cpp
+         out_test.cpp
+         ps_conn.cpp
+         tlsSesector.cpp
+         tray.cpp
+         D:\VS2010\VC\bin\x86_amd64\CL.exe /c /Zi /nologo /W3 /WX- /O2 /Oi /GL /D WIN32 /D NDEBUG /D _WINDOWS /D _USRDLL /D BASICLIBPP_EXPORTS /D _WINDLL /Gm- /EHa /MT /GS /Gy /fp:precise /Zc:wchar_t /Zc:forScope /Fo"x64\Release\\" /Fd"x64\Release\vc100.pdb" /Gd /TC /errorReport:prompt sqlite\sqlite3.c
+         sqlite3.c
+       ResourceCompile:
+         所有输出均为最新。
+       Link:
+         D:\VS2010\VC\bin\x86_amd64\link.exe /ERRORREPORT:PROMPT /OUT:"V:\basicLibPP\x64\Release\basicLibPP.dll" /INCREMENTAL:NO /NOLOGO LIBCMT.lib ntdll.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /DEF:"DLLExports.def" /MANIFEST /ManifestFile:"x64\Release\basicLibPP.dll.intermediate.manifest" /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /DEBUG /PDB:"V:\basicLibPP\x64\Release\basicLibPP.pdb" /SUBSYSTEM:WINDOWS /OPT:REF /OPT:ICF /LTCG /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"V:\basicLibPP\x64\Release\basicLibPP.lib" /MACHINE:X64 /DLL x64\Release\res.res
+         x64\Release\basic_fun.obj
+         x64\Release\dis_decode.obj
+         x64\Release\dis_groups.obj
+         x64\Release\dis_out.obj
+         x64\Release\resolve.obj
+         x64\Release\syntax.obj
+         x64\Release\fileBypass.obj
+         x64\Release\fileMap.obj
+         x64\Release\hook_mgr.obj
+         x64\Release\HndInfo.obj
+         x64\Release\md5_tree.obj
+         x64\Release\MD5.obj
+         x64\Release\SHA256.obj
+         x64\Release\Hook.obj
+         x64\Release\logSystem.obj
+         x64\Release\cp_out.obj
+         x64\Release\crt_func.obj
+         x64\Release\LzFind.obj
+         x64\Release\LzmaDec.obj
+         x64\Release\LzmaEnc.obj
+         x64\Release\main.obj
+         x64\Release\fast_allocator.obj
+         x64\Release\_malloc.obj
+         x64\Release\out_test.obj
+         x64\Release\ps_conn.obj
+         x64\Release\QueuedLock.obj
+         x64\Release\sign_verify.obj
+         x64\Release\sqlite3.obj
+         x64\Release\tlsSesector.obj
+         x64\Release\tray.obj
+            正在创建库 V:\basicLibPP\x64\Release\basicLibPP.lib 和对象 V:\basicLibPP\x64\Release\basicLibPP.exp
+         正在生成代码
+         已完成代码的生成
+         basicLibPP.vcxproj -> V:\basicLibPP\x64\Release\basicLibPP.dll
+       Manifest:
+         C:\Program Files (x86)\Microsoft SDKs\Windows\v7.0A\bin\mt.exe /nologo /verbose /outputresource:"V:\basicLibPP\x64\Release\basicLibPP.dll;#2" /manifest x64\Release\basicLibPP.dll.intermediate.manifest
+       FinalizeBuildStatus:
+         正在删除文件“x64\Release\basicLibPP.unsuccessfulbuild”。
+         正在对“x64\Release\basicLibPP.lastbuildstate”执行 Touch 任务。
+     1>已完成生成项目“V:\basicLibPP\basicLibPP\basicLibPP.vcxproj”(build 个目标)的操作。
+
+生成成功。
+
+已用时间 00:00:37.76

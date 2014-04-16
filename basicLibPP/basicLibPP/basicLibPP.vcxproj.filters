@@ -1,0 +1,295 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="源文件">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="头文件">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="资源文件">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="源文件\lzma">
+      <UniqueIdentifier>{cc60f660-0395-4cdc-843d-2eb29b66e455}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\lzma">
+      <UniqueIdentifier>{53361f07-836c-4a1c-8bbf-58bf007a6b10}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\memlib">
+      <UniqueIdentifier>{f2862ce1-6673-4c62-b49e-bf8b47257486}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\memlib">
+      <UniqueIdentifier>{2ae0fa36-f5fd-4c82-bb86-7c13a7fbf26e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\QueuedLock">
+      <UniqueIdentifier>{84722516-4a80-4988-a9b8-7a0f75916cd1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\QueuedLock">
+      <UniqueIdentifier>{62ff79cb-9411-4a0e-a418-76a44bb76f63}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\Hash">
+      <UniqueIdentifier>{db8165d0-d8a4-42e1-ae70-74d96155f3f6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\SignVerify">
+      <UniqueIdentifier>{45843fdb-ebb3-4c16-b7c8-e01b2c3b99bc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\HandleInfo">
+      <UniqueIdentifier>{1059b87b-f59f-4d92-b929-982567e42a1b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\HandleInfo">
+      <UniqueIdentifier>{824571b2-b5b4-47ee-83fb-b6dc96848a99}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\KernelDefine">
+      <UniqueIdentifier>{686b71b1-520d-4034-9eb6-d55d0be976b1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\md5Tree">
+      <UniqueIdentifier>{1474a9ef-1695-4cb2-8a18-55cb10fb32e2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\sqlite">
+      <UniqueIdentifier>{6a5fbc48-e651-45c2-9158-c5be104b9119}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\sqlite">
+      <UniqueIdentifier>{9987cc33-ceef-441e-9548-cd31ba3648cf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\DisEng">
+      <UniqueIdentifier>{45319566-fe71-4d05-b710-660ef0efdad0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\DisEng">
+      <UniqueIdentifier>{9e18a5c3-9eda-41d3-a61f-2fc08fa38371}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\HookLib">
+      <UniqueIdentifier>{9b861961-e9ba-479e-8aca-861ddb2ec502}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\HookLib">
+      <UniqueIdentifier>{ed0884f3-85d2-43ae-b1ff-6b7fa4756f8f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\GeneralHook">
+      <UniqueIdentifier>{03806a66-6a0c-48f5-a0ec-5e63f14cbcb1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\GeneralHook">
+      <UniqueIdentifier>{41474bec-70f6-47c8-aeb9-3f5151854cdd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\tlsSelector">
+      <UniqueIdentifier>{66cd2bdc-a378-4542-bf06-8c690945edf1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\tray">
+      <UniqueIdentifier>{82a7d9d5-769f-41f7-8131-310fc185bcd3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\ps_conn">
+      <UniqueIdentifier>{1790f375-c107-42c4-8a24-43cd1230d1a1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\logSystem">
+      <UniqueIdentifier>{f1424193-de53-4d32-9a2e-e86dc2a346e7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\fileSystem">
+      <UniqueIdentifier>{6d5e821c-718c-4029-a110-c22a298a660a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\SignVerify">
+      <UniqueIdentifier>{9fc3eaed-f67c-485d-b17e-65ecb5efac72}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="basic_fun.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="lzma\LzmaEnc.c">
+      <Filter>源文件\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="lzma\cp_out.c">
+      <Filter>源文件\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="lzma\crt_func.c">
+      <Filter>源文件\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="lzma\LzFind.c">
+      <Filter>源文件\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="lzma\LzmaDec.c">
+      <Filter>源文件\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="memlib\_malloc.c">
+      <Filter>源文件\memlib</Filter>
+    </ClCompile>
+    <ClCompile Include="QueuedLock\QueuedLock.cpp">
+      <Filter>源文件\QueuedLock</Filter>
+    </ClCompile>
+    <ClCompile Include="out_test.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Hash\MD5.cpp">
+      <Filter>源文件\Hash</Filter>
+    </ClCompile>
+    <ClCompile Include="Hash\SHA256.cpp">
+      <Filter>源文件\Hash</Filter>
+    </ClCompile>
+    <ClCompile Include="SignVerify\sign_verify.cpp">
+      <Filter>源文件\SignVerify</Filter>
+    </ClCompile>
+    <ClCompile Include="HandleInfo\HndInfo.cpp">
+      <Filter>源文件\HandleInfo</Filter>
+    </ClCompile>
+    <ClCompile Include="HashTree\md5_tree.cpp">
+      <Filter>源文件\md5Tree</Filter>
+    </ClCompile>
+    <ClCompile Include="sqlite\sqlite3.c">
+      <Filter>源文件\sqlite</Filter>
+    </ClCompile>
+    <ClCompile Include="DisEng\dis_out.cpp">
+      <Filter>源文件\DisEng</Filter>
+    </ClCompile>
+    <ClCompile Include="HookLib\Hook.cpp">
+      <Filter>源文件\HookLib</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneralHook\hook_mgr.cpp">
+      <Filter>源文件\GeneralHook</Filter>
+    </ClCompile>
+    <ClCompile Include="tlsSelector\tlsSesector.cpp">
+      <Filter>源文件\tlsSelector</Filter>
+    </ClCompile>
+    <ClCompile Include="tray\tray.cpp">
+      <Filter>源文件\tray</Filter>
+    </ClCompile>
+    <ClCompile Include="ps_conn\ps_conn.cpp">
+      <Filter>源文件\ps_conn</Filter>
+    </ClCompile>
+    <ClCompile Include="log\logSystem.cpp">
+      <Filter>源文件\logSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="memlib\fast_allocator.cpp">
+      <Filter>源文件\memlib</Filter>
+    </ClCompile>
+    <ClCompile Include="fileSystem\fileBypass.cpp">
+      <Filter>源文件\fileSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="fileSystem\fileMap.cpp">
+      <Filter>源文件\fileSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="DisEng\dis_decode.cc">
+      <Filter>源文件\DisEng</Filter>
+    </ClCompile>
+    <ClCompile Include="DisEng\dis_groups.cc">
+      <Filter>源文件\DisEng</Filter>
+    </ClCompile>
+    <ClCompile Include="DisEng\resolve.cc">
+      <Filter>源文件\DisEng</Filter>
+    </ClCompile>
+    <ClCompile Include="DisEng\syntax.cc">
+      <Filter>源文件\DisEng</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="basic_fun.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="basicLibPP.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="lzma\cp_out.h">
+      <Filter>头文件\lzma</Filter>
+    </ClInclude>
+    <ClInclude Include="lzma\crt_func.h">
+      <Filter>头文件\lzma</Filter>
+    </ClInclude>
+    <ClInclude Include="lzma\LzFind.h">
+      <Filter>头文件\lzma</Filter>
+    </ClInclude>
+    <ClInclude Include="lzma\LzHash.h">
+      <Filter>头文件\lzma</Filter>
+    </ClInclude>
+    <ClInclude Include="lzma\LzmaDec.h">
+      <Filter>头文件\lzma</Filter>
+    </ClInclude>
+    <ClInclude Include="lzma\LzmaEnc.h">
+      <Filter>头文件\lzma</Filter>
+    </ClInclude>
+    <ClInclude Include="lzma\Types.h">
+      <Filter>头文件\lzma</Filter>
+    </ClInclude>
+    <ClInclude Include="blpp_config.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="blpp_typedef.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="memlib\_malloc.h">
+      <Filter>头文件\memlib</Filter>
+    </ClInclude>
+    <ClInclude Include="QueuedLock\QueuedLock.h">
+      <Filter>头文件\QueuedLock</Filter>
+    </ClInclude>
+    <ClInclude Include="HandleInfo\HndInfo.h">
+      <Filter>头文件\HandleInfo</Filter>
+    </ClInclude>
+    <ClInclude Include="my_krnlDef\krnlDef.h">
+      <Filter>头文件\KernelDefine</Filter>
+    </ClInclude>
+    <ClInclude Include="sqlite\sqlite3.h">
+      <Filter>头文件\sqlite</Filter>
+    </ClInclude>
+    <ClInclude Include="sqlite\sqlite3ext.h">
+      <Filter>头文件\sqlite</Filter>
+    </ClInclude>
+    <ClInclude Include="DisEng\dis_out.h">
+      <Filter>头文件\DisEng</Filter>
+    </ClInclude>
+    <ClInclude Include="HookLib\Hook.h">
+      <Filter>头文件\HookLib</Filter>
+    </ClInclude>
+    <ClInclude Include="GeneralHook\hook_mgr.h">
+      <Filter>头文件\GeneralHook</Filter>
+    </ClInclude>
+    <ClInclude Include="DisEng\config.h">
+      <Filter>头文件\DisEng</Filter>
+    </ClInclude>
+    <ClInclude Include="DisEng\decompose.h">
+      <Filter>头文件\DisEng</Filter>
+    </ClInclude>
+    <ClInclude Include="DisEng\dis_tables.h">
+      <Filter>头文件\DisEng</Filter>
+    </ClInclude>
+    <ClInclude Include="DisEng\disasm.h">
+      <Filter>头文件\DisEng</Filter>
+    </ClInclude>
+    <ClInclude Include="DisEng\pragma_setting.h">
+      <Filter>头文件\DisEng</Filter>
+    </ClInclude>
+    <ClInclude Include="SignVerify\sign_verify.h">
+      <Filter>头文件\SignVerify</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="DLLExports.def">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="DisEng\dis_tables.inc">
+      <Filter>头文件\DisEng</Filter>
+    </None>
+    <None Include="DisEng\dis_tables_avx.inc">
+      <Filter>头文件\DisEng</Filter>
+    </None>
+    <None Include="DisEng\dis_tables_sse.inc">
+      <Filter>头文件\DisEng</Filter>
+    </None>
+    <None Include="DisEng\dis_tables_x87.inc">
+      <Filter>头文件\DisEng</Filter>
+    </None>
+    <None Include="DisEng\dis_tables_xop.inc">
+      <Filter>头文件\DisEng</Filter>
+    </None>
+    <None Include="DisEng\opcodes.inc">
+      <Filter>头文件\DisEng</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="res.rc">
+      <Filter>资源文件</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+</Project>

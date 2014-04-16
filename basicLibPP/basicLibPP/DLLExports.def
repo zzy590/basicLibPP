@@ -1,0 +1,139 @@
+﻿
+LIBRARY      basicLibPP
+
+EXPORTS
+    blpp_version
+	blpp_isInternalThread
+
+	blpp_Lock_InitializeQueuedLock
+	blpp_Lock_AcquireQueuedLockExclusive
+	blpp_Lock_TryAcquireQueuedLockExclusive
+	blpp_Lock_ReleaseQueuedLockExclusive
+	blpp_Lock_AcquireQueuedLockShared
+	blpp_Lock_ReleaseQueuedLockShared
+	blpp_Lock_AcquireReleaseQueuedLockExclusive
+	blpp_Lock_TryAcquireReleaseQueuedLockExclusive
+
+	blpp_mem_alloc
+	blpp_mem_realloc
+	blpp_mem_free
+	blpp_mem_createFastAllocator
+	blpp_mem_closeFastAllocator
+	blpp_mem_allocateFromFastAllocator
+	blpp_mem_freeToFastAllocator
+
+	blpp_Hash_MD5
+	blpp_Hash_SHA256
+
+	blpp_TextEncode_AnsiToUnicode
+	blpp_TextEncode_UnicodeToAnsi
+
+	blpp_SignVerify_VerifyFileSignW
+	blpp_SignVerify_VerifyFileSignA
+
+	blpp_Lzma_UncompressData
+	blpp_Lzma_CompressData
+	blpp_Lzma_StreamCompress
+	blpp_Lzma_StreamUncompress
+
+	blpp_System_GetCurrentOs
+	blpp_System_IsOsAtLeast
+	blpp_System_Is64BitOs
+	blpp_System_EnableWow64FsRedirection
+	blpp_System_RestartComputer
+	blpp_System_UpMyself
+	blpp_System_GetRegDataA
+	blpp_System_GetRegDataW
+	blpp_System_SetRegDataA
+	blpp_System_SetRegDataW
+
+	blpp_Object_RefreshPrefix
+	blpp_Object_GetFormattedFileName
+	blpp_Object_GetFormattedKeyName
+	blpp_Object_QueryHandleInfo
+
+	blpp_md5Tree_New
+	blpp_md5Tree_Delete
+	blpp_md5Tree_Insert
+	blpp_md5Tree_Erase
+	blpp_md5Tree_Find
+	blpp_md5Tree_Clear
+	blpp_md5Tree_LoadA
+	blpp_md5Tree_LoadW
+	blpp_md5Tree_SaveA
+	blpp_md5Tree_SaveW
+
+	blpp_sqlite_OpenDB
+	blpp_sqlite_CloseDB
+	blpp_sqlite_Exec
+
+	DisEng_AllocateContext
+	DisEng_FreeContext
+	DisEng_SetCpuType
+	DisEng_Disasm
+
+	blpp_Hook_AddThread
+	blpp_Hook_RemoveThread
+	blpp_Hook_RefreshThread
+	blpp_Hook_AddAllThread
+	blpp_Hook_SetBypassFilter
+	blpp_Hook_RemoveBypassFilter
+	blpp_Hook_StartBypassFilter
+	blpp_Hook_StopBypassFilter
+	blpp_Hook_SetDirectFilter
+	blpp_Hook_RemoveDirectFilter
+	blpp_Hook_StartDirectFilter
+	blpp_Hook_StopDirectFilter
+	blpp_Hook_FixHook
+	blpp_Hook_IsHookContext
+	blpp_Hook_AllocSmartCallBackCode
+	blpp_Hook_FreeSmartCallBackCode
+
+	blpp_Tls_FlagOn
+	blpp_Tls_SetFlag
+	blpp_Tls_ClearFlag
+	blpp_Tls_CheckAndSetFlag
+
+	blpp_Tray_ChangeIcon
+	blpp_Tray_BalloonMessage
+	blpp_Tray_CreateNewTray
+	blpp_Tray_DestoryTray
+
+	blpp_Pipe_CreateLinker
+	blpp_Pipe_CreateNamedLinker
+	blpp_Pipe_Accept
+	blpp_Pipe_Disconnect
+	blpp_Pipe_WaitServerOk
+	blpp_Pipe_Connect
+	blpp_Pipe_Send
+	blpp_Pipe_Recv
+
+	blpp_Payload_FindNativePack
+	blpp_Payload_AddNativePack
+	blpp_Payload_FreeNativePack
+	blpp_Payload_FindRemotePack
+	blpp_Payload_AddRemotePack
+	blpp_Payload_FreeRemotePack
+
+	blpp_Log_SetLogDirectory
+	blpp_Log_DebugLog
+
+	blpp_fs_CreateFileBypassA
+	blpp_fs_CreateFileBypassW
+	blpp_fs_CreateDirectoryBypassA
+	blpp_fs_CreateDirectoryBypassW
+	blpp_fs_RemoveDirectoryBypassA
+	blpp_fs_RemoveDirectoryBypassW
+	blpp_fs_DeleteFileBypassA
+	blpp_fs_DeleteFileBypassW
+	blpp_fs_MoveFileBypassA
+	blpp_fs_MoveFileBypassW
+	blpp_fs_CopyFileBypassA
+	blpp_fs_CopyFileBypassW
+	blpp_fs_GetFileAttributesBypassA
+	blpp_fs_GetFileAttributesBypassW
+	blpp_fs_SetFileAttributesBypassA
+	blpp_fs_SetFileAttributesBypassW
+	blpp_fs_LoadFileAsMemoryA
+	blpp_fs_LoadFileAsMemoryW
+	blpp_fs_UnLoadFileMemory

@@ -1,0 +1,21 @@
+﻿生成启动时间为 2013/12/2 22:29:22。
+     1>项目“V:\blpp_test\blpp_test\blpp_test.vcxproj”在节点 2 上(build 个目标)。
+     1>InitializeBuildStatus:
+         正在创建“Release\blpp_test.unsuccessfulbuild”，因为已指定“AlwaysCreate”。
+       ClCompile:
+         所有输出均为最新。
+       Link:
+         D:\VS2010\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"V:\blpp_test\Release\blpp_test.exe" /INCREMENTAL:NO /NOLOGO basicLibPP.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /ManifestFile:"Release\blpp_test.exe.intermediate.manifest" /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /DEBUG /PDB:"V:\blpp_test\Release\blpp_test.pdb" /SUBSYSTEM:CONSOLE /OPT:REF /OPT:ICF /LTCG /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"V:\blpp_test\Release\blpp_test.lib" /MACHINE:X86 Release\main.obj
+         正在生成代码
+         已完成代码的生成
+         blpp_test.vcxproj -> V:\blpp_test\Release\blpp_test.exe
+       Manifest:
+         C:\Program Files (x86)\Microsoft SDKs\Windows\v7.0A\bin\mt.exe /nologo /verbose /outputresource:"V:\blpp_test\Release\blpp_test.exe;#1" /manifest Release\blpp_test.exe.intermediate.manifest
+       FinalizeBuildStatus:
+         正在删除文件“Release\blpp_test.unsuccessfulbuild”。
+         正在对“Release\blpp_test.lastbuildstate”执行 Touch 任务。
+     1>已完成生成项目“V:\blpp_test\blpp_test\blpp_test.vcxproj”(build 个目标)的操作。
+
+生成成功。
+
+已用时间 00:00:01.29
