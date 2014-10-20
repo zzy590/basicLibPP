@@ -24,7 +24,7 @@
 #define Config_Platform_Windows 1
 
 // Debug
-#define Config_DBG 1
+#define Config_DBG 0
 
 #ifndef NDEBUG
 	#define NDEBUG
