@@ -91,6 +91,12 @@
     <Filter Include="头文件\SignVerify">
       <UniqueIdentifier>{9fc3eaed-f67c-485d-b17e-65ecb5efac72}</UniqueIdentifier>
     </Filter>
+    <Filter Include="头文件\lzma\lzmaLib">
+      <UniqueIdentifier>{27ecbf9d-e990-46f8-85a0-e6753b1eb6bd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\lzma\lzmaLib">
+      <UniqueIdentifier>{e5fe44d0-257b-4d67-96cb-97606b80516d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -98,21 +104,6 @@
     </ClCompile>
     <ClCompile Include="basic_fun.cpp">
       <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="lzma\LzmaEnc.c">
-      <Filter>源文件\lzma</Filter>
-    </ClCompile>
-    <ClCompile Include="lzma\cp_out.c">
-      <Filter>源文件\lzma</Filter>
-    </ClCompile>
-    <ClCompile Include="lzma\crt_func.c">
-      <Filter>源文件\lzma</Filter>
-    </ClCompile>
-    <ClCompile Include="lzma\LzFind.c">
-      <Filter>源文件\lzma</Filter>
-    </ClCompile>
-    <ClCompile Include="lzma\LzmaDec.c">
-      <Filter>源文件\lzma</Filter>
     </ClCompile>
     <ClCompile Include="memlib\_malloc.c">
       <Filter>源文件\memlib</Filter>
@@ -183,6 +174,33 @@
     <ClCompile Include="DisEng\syntax.cc">
       <Filter>源文件\DisEng</Filter>
     </ClCompile>
+    <ClCompile Include="lzma\lzmaLib\MtCoder.c">
+      <Filter>源文件\lzma\lzmaLib</Filter>
+    </ClCompile>
+    <ClCompile Include="lzma\lzmaLib\Threads.c">
+      <Filter>源文件\lzma\lzmaLib</Filter>
+    </ClCompile>
+    <ClCompile Include="lzma\lzmaLib\LzFind.c">
+      <Filter>源文件\lzma\lzmaLib</Filter>
+    </ClCompile>
+    <ClCompile Include="lzma\lzmaLib\LzFindMt.c">
+      <Filter>源文件\lzma\lzmaLib</Filter>
+    </ClCompile>
+    <ClCompile Include="lzma\lzmaLib\Lzma2Dec.c">
+      <Filter>源文件\lzma\lzmaLib</Filter>
+    </ClCompile>
+    <ClCompile Include="lzma\lzmaLib\Lzma2Enc.c">
+      <Filter>源文件\lzma\lzmaLib</Filter>
+    </ClCompile>
+    <ClCompile Include="lzma\lzmaLib\LzmaDec.c">
+      <Filter>源文件\lzma\lzmaLib</Filter>
+    </ClCompile>
+    <ClCompile Include="lzma\lzmaLib\LzmaEnc.c">
+      <Filter>源文件\lzma\lzmaLib</Filter>
+    </ClCompile>
+    <ClCompile Include="lzma\lzma_shell.cpp">
+      <Filter>源文件\lzma</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="basic_fun.h">
@@ -190,27 +208,6 @@
     </ClInclude>
     <ClInclude Include="basicLibPP.h">
       <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="lzma\cp_out.h">
-      <Filter>头文件\lzma</Filter>
-    </ClInclude>
-    <ClInclude Include="lzma\crt_func.h">
-      <Filter>头文件\lzma</Filter>
-    </ClInclude>
-    <ClInclude Include="lzma\LzFind.h">
-      <Filter>头文件\lzma</Filter>
-    </ClInclude>
-    <ClInclude Include="lzma\LzHash.h">
-      <Filter>头文件\lzma</Filter>
-    </ClInclude>
-    <ClInclude Include="lzma\LzmaDec.h">
-      <Filter>头文件\lzma</Filter>
-    </ClInclude>
-    <ClInclude Include="lzma\LzmaEnc.h">
-      <Filter>头文件\lzma</Filter>
-    </ClInclude>
-    <ClInclude Include="lzma\Types.h">
-      <Filter>头文件\lzma</Filter>
     </ClInclude>
     <ClInclude Include="blpp_config.h">
       <Filter>头文件</Filter>
@@ -262,6 +259,45 @@
     </ClInclude>
     <ClInclude Include="SignVerify\sign_verify.h">
       <Filter>头文件\SignVerify</Filter>
+    </ClInclude>
+    <ClInclude Include="lzma\lzmaLib\7zTypes.h">
+      <Filter>头文件\lzma\lzmaLib</Filter>
+    </ClInclude>
+    <ClInclude Include="lzma\lzmaLib\Compiler.h">
+      <Filter>头文件\lzma\lzmaLib</Filter>
+    </ClInclude>
+    <ClInclude Include="lzma\lzmaLib\LzFind.h">
+      <Filter>头文件\lzma\lzmaLib</Filter>
+    </ClInclude>
+    <ClInclude Include="lzma\lzmaLib\LzFindMt.h">
+      <Filter>头文件\lzma\lzmaLib</Filter>
+    </ClInclude>
+    <ClInclude Include="lzma\lzmaLib\LzHash.h">
+      <Filter>头文件\lzma\lzmaLib</Filter>
+    </ClInclude>
+    <ClInclude Include="lzma\lzmaLib\Lzma2Dec.h">
+      <Filter>头文件\lzma\lzmaLib</Filter>
+    </ClInclude>
+    <ClInclude Include="lzma\lzmaLib\Lzma2Enc.h">
+      <Filter>头文件\lzma\lzmaLib</Filter>
+    </ClInclude>
+    <ClInclude Include="lzma\lzmaLib\LzmaDec.h">
+      <Filter>头文件\lzma\lzmaLib</Filter>
+    </ClInclude>
+    <ClInclude Include="lzma\lzmaLib\LzmaEnc.h">
+      <Filter>头文件\lzma\lzmaLib</Filter>
+    </ClInclude>
+    <ClInclude Include="lzma\lzmaLib\MtCoder.h">
+      <Filter>头文件\lzma\lzmaLib</Filter>
+    </ClInclude>
+    <ClInclude Include="lzma\lzmaLib\Precomp.h">
+      <Filter>头文件\lzma\lzmaLib</Filter>
+    </ClInclude>
+    <ClInclude Include="lzma\lzmaLib\Threads.h">
+      <Filter>头文件\lzma\lzmaLib</Filter>
+    </ClInclude>
+    <ClInclude Include="lzma\lzma_shell.h">
+      <Filter>头文件\lzma</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -20,7 +20,7 @@
 
 #include "QueuedLock/QueuedLock.h"
 #include "memlib/_malloc.h"
-#include "lzma/cp_out.h"
+#include "lzma/lzma_shell.h"
 #include "HandleInfo/HndInfo.h"
 #include "sqlite/sqlite3.h"
 #include "DisEng/dis_out.h"
@@ -35,7 +35,7 @@ using namespace std;
 //////////////////////////////////////////////////////////////////////////
 
 
-#define VERSION_ZZY ((T_Dword)1000004)
+#define VERSION_ZZY ((T_Dword)1000005)
 
 #ifdef Config_DBG
     #define DBG_PRINT(_x) cout<<_x<<endl;
@@ -134,44 +134,6 @@ typedef enum _BLPP_VERIFY_RESULT
 
 BLPP_VERIFY_RESULT blpp_SignVerify_VerifyFileSignW(PCT_wstr FileName);
 BLPP_VERIFY_RESULT blpp_SignVerify_VerifyFileSignA(PCT_str FileName);
-
-#define BLPP_LZMA_TRY_TIMES 16
-
-#if defined(_WIN64)
-    #include <PshPack8.h>
-#else
-    #include <PshPack4.h>
-#endif
-
-typedef struct _BLPP_LZMA_UNCOMPRESS_REQUST
-{
-    PT_byte CompressedData;
-    T_Bit32u CompressedLength;
-    PT_byte UncompressedData; // optional,if NULL,should call blpp_mem_free by caller.
-    T_Bit32u UncompressedLength; // optional,if NULL,should call blpp_mem_free by caller.
-} BLPP_LZMA_UNCOMPRESS_REQUST, *PBLPP_LZMA_UNCOMPRESS_REQUST;
-
-typedef struct _BLPP_LZMA_COMPRESS_REQUST
-{
-    T_Bit8u CompressLevel; // 0 <= level <= 9
-    PT_byte InputData;
-    T_Bit32u InputLength;
-    PT_byte CompressedData; // optional,if NULL,should call blpp_mem_free by caller.
-    T_Bit32u CompressedLength; // optional,if NULL,should call blpp_mem_free by caller.
-} BLPP_LZMA_COMPRESS_REQUST, *PBLPP_LZMA_COMPRESS_REQUST;
-
-#include <PopPack.h>
-
-T_status blpp_Lzma_UncompressData(PBLPP_LZMA_UNCOMPRESS_REQUST pLUR);
-T_status blpp_Lzma_CompressData(PBLPP_LZMA_COMPRESS_REQUST pLCR);
-
-typedef int (__cdecl * __pfn_blpp_Lzma_Read)(void *p, void *buf, size_t *size);
-  /* if (input(*size) != 0 && output(*size) == 0) means end_of_stream. (output(*size) < input(*size)) is allowed. Return 0 when success. */
-typedef size_t (__cdecl * __pfn_blpp_Lzma_Write)(void *p, const void *buf, size_t size);
-  /* Returns: result - the number of actually written bytes. (result < size) means error */
-
-T_status blpp_Lzma_StreamCompress(PT_void lparam,T_Qword allLength,__pfn_blpp_Lzma_Read pRead,__pfn_blpp_Lzma_Write pWrite,T_Bit8u level /* 0 <= level <= 9 */);
-T_status blpp_Lzma_StreamUncompress(PT_void lparam,__pfn_blpp_Lzma_Read pRead,__pfn_blpp_Lzma_Write pWrite);
 
 typedef enum _blpp_System_OSVersionEnum
 {

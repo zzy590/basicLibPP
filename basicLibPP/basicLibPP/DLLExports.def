@@ -31,10 +31,15 @@ EXPORTS
 	blpp_SignVerify_VerifyFileSignW
 	blpp_SignVerify_VerifyFileSignA
 
-	blpp_Lzma_UncompressData
-	blpp_Lzma_CompressData
-	blpp_Lzma_StreamCompress
-	blpp_Lzma_StreamUncompress
+	zzyLzmaEnc_create
+	zzyLzmaEnc_destroy
+	zzyLzmaEnc_setProps
+	zzyLzmaEnc_encode
+	zzyLzmaDec_decode
+	zzyLzma_freeBuffer
+	zzyLzma_compress
+	zzyLzma_decompress
+	zzyLzma_getDecompressedLength
 
 	blpp_System_GetCurrentOs
 	blpp_System_IsOsAtLeast
