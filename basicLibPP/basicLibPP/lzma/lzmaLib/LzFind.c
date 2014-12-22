@@ -1,6 +1,8 @@
 /* LzFind.c -- Match finder for LZ algorithms
 2009-04-22 : Igor Pavlov : Public domain */
 
+#include "Precomp.h"
+
 #include <string.h>
 
 #include "LzFind.h"
@@ -18,7 +20,7 @@ static void LzInWindow_Free(CMatchFinder *p, ISzAlloc *alloc)
 {
   if (!p->directInput)
   {
-    alloc->Free(alloc->lParam, p->bufferBase);
+    alloc->Free(alloc, p->bufferBase);
     p->bufferBase = 0;
   }
 }
@@ -37,7 +39,7 @@ static int LzInWindow_Create(CMatchFinder *p, UInt32 keepSizeReserv, ISzAlloc *a
   {
     LzInWindow_Free(p, alloc);
     p->blockSize = blockSize;
-    p->bufferBase = (Byte *)alloc->Alloc(alloc->lParam, (size_t)blockSize);
+    p->bufferBase = (Byte *)alloc->Alloc(alloc, (size_t)blockSize);
   }
   return (p->bufferBase != 0);
 }
@@ -75,7 +77,7 @@ static void MatchFinder_ReadBlock(CMatchFinder *p)
     size_t size = (p->bufferBase + p->blockSize - dest);
     if (size == 0)
       return;
-    p->result = p->stream->Read(p->stream->lParam, dest, &size);
+    p->result = p->stream->Read(p->stream, dest, &size);
     if (p->result != SZ_OK)
       return;
     if (size == 0)
@@ -91,7 +93,7 @@ static void MatchFinder_ReadBlock(CMatchFinder *p)
 
 void MatchFinder_MoveBlock(CMatchFinder *p)
 {
-  my_memmove(p->bufferBase,
+  memmove(p->bufferBase,
     p->buffer - p->keepSizeBefore,
     (size_t)(p->streamPos - p->pos + p->keepSizeBefore));
   p->buffer = p->bufferBase + p->keepSizeBefore;
@@ -150,7 +152,7 @@ void MatchFinder_Construct(CMatchFinder *p)
 
 static void MatchFinder_FreeThisClassMemory(CMatchFinder *p, ISzAlloc *alloc)
 {
-  alloc->Free(alloc->lParam, p->hash);
+  alloc->Free(alloc, p->hash);
   p->hash = 0;
 }
 
@@ -165,7 +167,7 @@ static CLzRef* AllocRefs(UInt32 num, ISzAlloc *alloc)
   size_t sizeInBytes = (size_t)num * sizeof(CLzRef);
   if (sizeInBytes / sizeof(CLzRef) != num)
     return 0;
-  return (CLzRef *)alloc->Alloc(alloc->lParam, sizeInBytes);
+  return (CLzRef *)alloc->Alloc(alloc, sizeInBytes);
 }
 
 int MatchFinder_Create(CMatchFinder *p, UInt32 historySize,
@@ -512,7 +514,7 @@ static UInt32 Bt3_MatchFinder_GetMatches(CMatchFinder *p, UInt32 *distances)
 
   delta2 = p->pos - p->hash[hash2Value];
   curMatch = p->hash[kFix3HashSize + hashValue];
-
+  
   p->hash[hash2Value] =
   p->hash[kFix3HashSize + hashValue] = p->pos;
 
@@ -546,7 +548,7 @@ static UInt32 Bt4_MatchFinder_GetMatches(CMatchFinder *p, UInt32 *distances)
   delta2 = p->pos - p->hash[                hash2Value];
   delta3 = p->pos - p->hash[kFix3HashSize + hash3Value];
   curMatch = p->hash[kFix4HashSize + hashValue];
-
+  
   p->hash[                hash2Value] =
   p->hash[kFix3HashSize + hash3Value] =
   p->hash[kFix4HashSize + hashValue] = p->pos;
