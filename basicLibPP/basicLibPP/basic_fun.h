@@ -145,6 +145,7 @@ typedef enum _blpp_System_OSVersionEnum
     WIN_VISTA,
     WIN_7,
     WIN_8,
+	WIN_BLUE, // Windows 8.1
 } blpp_System_OSVersionEnum;
 
 blpp_System_OSVersionEnum blpp_System_GetCurrentOs();

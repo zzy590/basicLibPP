@@ -258,6 +258,8 @@ blpp_System_OSVersionEnum blpp_System_GetCurrentOs()
             return WIN_7;
         case 2:
             return WIN_8;
+		case 3:
+			return WIN_BLUE;
         default:
             return WIN_UNKNOWN;
         }
@@ -296,6 +298,10 @@ T_bool blpp_System_IsOsAtLeast(blpp_System_OSVersionEnum reqMinOS)
         major = 6;
         minor = 2;
         break;
+	case WIN_BLUE:
+		major = 6;
+		minor = 3;
+		break;
     default:
         break;
     }

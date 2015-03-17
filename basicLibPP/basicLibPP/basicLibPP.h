@@ -132,6 +132,7 @@ typedef enum _blpp_System_OSVersionEnum
     WIN_VISTA,
     WIN_7,
     WIN_8,
+	WIN_BLUE, // Windows 8.1
 } blpp_System_OSVersionEnum;
 
 BASIC_LIB_PP_API blpp_System_OSVersionEnum blpp_System_GetCurrentOs();
@@ -233,7 +234,7 @@ BASIC_LIB_PP_API T_bool blpp_sqlite_Exec(PT_void db,PCT_str sql,__pfn_blpp_sqlit
 typedef struct _ZZY_DIS_CONTEXT *PZZY_DIS_CONTEXT;
 BASIC_LIB_PP_API PZZY_DIS_CONTEXT DisEng_AllocateContext();
 BASIC_LIB_PP_API T_void DisEng_FreeContext(PZZY_DIS_CONTEXT pContext);
-BASIC_LIB_PP_API T_void DisEng_SetCpuType(PZZY_DIS_CONTEXT pContext,int n);
+BASIC_LIB_PP_API T_void DisEng_SetCpuType(PZZY_DIS_CONTEXT pContext,int n/*16,32,64*/);
 BASIC_LIB_PP_API int DisEng_Disasm(PZZY_DIS_CONTEXT pContext,T_Qword base,T_Qword ip,PCT_void data,PT_str strBuffer,PDisEng_DECOMPOSED pDecomposed);
 
 //
