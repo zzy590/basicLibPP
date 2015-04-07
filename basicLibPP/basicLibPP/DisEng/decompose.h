@@ -1132,7 +1132,8 @@ typedef enum _DisEng_InstructOpcodeClass
 #endif
 
 enum {
-	IA_TYPE_X87 = 0,                 /* FPU (X87) instruction */
+	IA_TYPE_386 = 0,                 /* 386 or earlier instruction */
+	IA_TYPE_X87,                     /* FPU (X87) instruction */
 	IA_TYPE_486,                     /* 486 new instruction */
 	IA_TYPE_PENTIUM,                 /* Pentium new instruction */
 	IA_TYPE_P6,                      /* P6 new instruction */
