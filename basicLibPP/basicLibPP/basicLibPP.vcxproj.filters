@@ -328,4 +328,9 @@
       <Filter>资源文件</Filter>
     </ResourceCompile>
   </ItemGroup>
+  <ItemGroup>
+    <Object Include="xp_hack.obj">
+      <Filter>源文件</Filter>
+    </Object>
+  </ItemGroup>
 </Project>
