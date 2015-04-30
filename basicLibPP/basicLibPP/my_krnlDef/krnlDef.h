@@ -17,34 +17,6 @@ extern "C" {
 
 typedef PVOID *PPVOID;
 
-#ifdef _M_IX86
-
-#ifndef _InterlockedCompareExchangePointer
-FORCEINLINE void *_InterlockedCompareExchangePointer(
-    void *volatile *Destination,
-    void *Exchange,
-    void *Comparand
-    )
-{
-	return InterlockedCompareExchangePointer(Destination,Exchange,Comparand);
-}
-#endif
-
-#ifndef _InterlockedExchangePointer
-FORCEINLINE void *_InterlockedExchangePointer(
-    void *volatile *Destination,
-    void *Exchange
-    )
-{
-    return (PVOID)_InterlockedExchange(
-        (PLONG_PTR)Destination,
-        (LONG_PTR)Exchange
-        );
-}
-#endif
-
-#endif
-
 FORCEINLINE LONG_PTR _InterlockedExchangeAddPointer(
     _Inout_ LONG_PTR volatile *Addend,
     _In_ LONG_PTR Value
@@ -559,14 +531,6 @@ typedef struct _TEB_ACTIVE_FRAME
 	struct _TEB_ACTIVE_FRAME *Previous;
 	PTEB_ACTIVE_FRAME_CONTEXT Context;
 } TEB_ACTIVE_FRAME, *PTEB_ACTIVE_FRAME;
-
-#ifdef _M_IX86
-typedef struct _PROCESSOR_NUMBER {
-	WORD   Group;
-	BYTE  Number;
-	BYTE  Reserved;
-} PROCESSOR_NUMBER, *PPROCESSOR_NUMBER;
-#endif
 
 typedef struct _TEB
 {

@@ -40,7 +40,9 @@ typedef BOOL (WINAPI *_CryptCATAdminAcquireContext)(
 	DWORD dwFlags
 	);
 
+#ifdef _M_IX86
 typedef LPCVOID PCCERT_STRONG_SIGN_PARA;
+#endif
 
 typedef BOOL (WINAPI *_CryptCATAdminAcquireContext2)(
 	HCATADMIN *phCatAdmin,
