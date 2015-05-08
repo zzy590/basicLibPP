@@ -20,9 +20,6 @@
 // Platform setting
 //
 
-// System
-#define Config_Platform_Windows 1
-
 // Debug
 #define Config_DBG 0
 
@@ -32,17 +29,7 @@
 
 // CPU
 #if defined(_M_IX86)
-    #define Config_Mem64_Mode 0
-	#define Config_Machine_X86 1
-    #define Config_Machine_X64 0
-    #define Config_Machine_IA64 0
-    #define Config_Machine_ARM 0
-#elif defined(_M_AMD64)
-    #define Config_Mem64_Mode 1
-    #define Config_Machine_X86 0
-    #define Config_Machine_X64 1
-    #define Config_Machine_IA64 0
-    #define Config_Machine_ARM 0
+#elif defined(_M_X64)
 #else
     #error "You must define the machine type."
 #endif

@@ -15,7 +15,7 @@
 
 #if defined(_M_IX86)
     #include <PshPack4.h>
-#elif defined(_M_AMD64)
+#elif defined(_M_X64)
     #include <PshPack8.h>
 #else
     #error "not support."
@@ -31,7 +31,7 @@ typedef struct _DETOUR_TRAMPOLINE
 
 #if defined(_M_IX86)
     C_ASSERT(sizeof(DETOUR_TRAMPOLINE)%4 == 0);
-#elif defined(_M_AMD64)
+#elif defined(_M_X64)
     C_ASSERT(sizeof(DETOUR_TRAMPOLINE)%8 == 0);
 #else
     #error "not support."
@@ -46,7 +46,7 @@ typedef struct _DETOUR_REGION
 
 #if defined(_M_IX86)
     C_ASSERT(sizeof(DETOUR_REGION)%4 == 0);
-#elif defined(_M_AMD64)
+#elif defined(_M_X64)
     C_ASSERT(sizeof(DETOUR_REGION)%8 == 0);
 #else
     #error "not support."
@@ -511,7 +511,7 @@ T_bool HOOK_SetAllThreadAlive(PHOOK_CONTEXT pCtx)
 #if defined(_M_IX86)
     #define DETOURS_EIP         Eip
     #define DETOURS_EIP_TYPE    T_Dword
-#elif defined(_M_AMD64)
+#elif defined(_M_X64)
     #define DETOURS_EIP         Rip
     #define DETOURS_EIP_TYPE    T_Qword
 #else
@@ -734,7 +734,7 @@ static inline int PushEAX(T_byte code[HOOK_PUSH_EAX_CODE_SIZE])
     return HOOK_PUSH_EAX_CODE_SIZE;
 }
 
-#elif defined(_M_AMD64)
+#elif defined(_M_X64)
 
 #define HOOK_CLEAN_RAX_CODE_SIZE (3)
 #define HOOK_SET_RAX_CODE_SIZE (10)
@@ -786,7 +786,7 @@ static inline int PushRAX(T_byte code[HOOK_PUSH_RAX_CODE_SIZE])
     #error "not support."
 #endif
 
-#if (defined(_M_IX86) || defined(_M_AMD64))
+#if (defined(_M_IX86) || defined(_M_X64))
 
 #define HOOK_NEAR_JUMP_CODE_SIZE (5)
 
@@ -1023,7 +1023,7 @@ static T_bool NewDisEng(PHOOK_CONTEXT pCtx,PZZY_DIS_CONTEXT *ppDisCtx,PDisEng_DE
     }
 #if defined(_M_IX86)
     DisEng_SetCpuType(pDisContext,32);
-#elif defined(_M_AMD64)
+#elif defined(_M_X64)
     DisEng_SetCpuType(pDisContext,64);
 #else
     #error "not support."
@@ -1062,7 +1062,7 @@ static T_bool MakeShellCode(PHOOK_CONTEXT pCtx,PHOOK_DETOUR pDetour)
         return TRUE;
     }
     pCode = (PT_byte)pDetour->Target;
-#if (defined(_M_IX86) || defined(_M_AMD64))
+#if (defined(_M_IX86) || defined(_M_X64))
     //
     // We also need to deal with a kind special inline hook: call XXXX.(Caution this will cause error sometime,ignore.)
     //
@@ -1083,7 +1083,7 @@ static T_bool MakeShellCode(PHOOK_CONTEXT pCtx,PHOOK_DETOUR pDetour)
             op_ptr += SetEAX(op_ptr,(T_Bit32u)(pCode + pDecomposed->InstructLength));
             op_ptr += PushEAX(op_ptr);
             op_ptr += CleanEAX(op_ptr);
-#else // defined(_M_AMD64)
+#else // defined(_M_X64)
             //
             // mov rax,next_instr; push rax; xor rax,rax; jmp CallTarget;
             //

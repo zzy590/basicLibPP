@@ -30,7 +30,7 @@
         T_Bit32u eax;
     } BLPP_HOOK_INFO, *PBLPP_HOOK_INFO;
     #include <PopPack.h>
-#elif defined(_M_AMD64)
+#elif defined(_M_X64)
     #include <PshPack8.h>
     typedef struct _BLPP_HOOK_INFO
     {

@@ -329,8 +329,6 @@
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
-    <Object Include="xp_hack.obj">
-      <Filter>源文件</Filter>
-    </Object>
+    <Object Include="xp_hack.obj" />
   </ItemGroup>
 </Project>

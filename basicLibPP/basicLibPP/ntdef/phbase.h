@@ -80,6 +80,7 @@ PHLIBAPI extern ACCESS_MASK ThreadAllAccess;
 #define WINDOWS_7 61
 #define WINDOWS_8 62
 #define WINDOWS_81 63
+#define WINDOWS_10 100
 #define WINDOWS_NEW MAXLONG
 
 #define WINDOWS_HAS_CONSOLE_HOST (WindowsVersion >= WINDOWS_7)
@@ -91,51 +92,6 @@ PHLIBAPI extern ACCESS_MASK ThreadAllAccess;
 #define WINDOWS_HAS_PSSUSPENDRESUMEPROCESS (WindowsVersion >= WINDOWS_VISTA)
 #define WINDOWS_HAS_SERVICE_TAGS (WindowsVersion >= WINDOWS_VISTA)
 #define WINDOWS_HAS_UAC (WindowsVersion >= WINDOWS_VISTA)
-
-// data
-
-// SIDs
-
-extern SID PhSeNobodySid;
-
-extern SID PhSeEveryoneSid;
-
-extern SID PhSeLocalSid;
-
-extern SID PhSeCreatorOwnerSid;
-extern SID PhSeCreatorGroupSid;
-
-extern SID PhSeDialupSid;
-extern SID PhSeNetworkSid;
-extern SID PhSeBatchSid;
-extern SID PhSeInteractiveSid;
-extern SID PhSeServiceSid;
-extern SID PhSeAnonymousLogonSid;
-extern SID PhSeProxySid;
-extern SID PhSeAuthenticatedUserSid;
-extern SID PhSeRestrictedCodeSid;
-extern SID PhSeTerminalServerUserSid;
-extern SID PhSeRemoteInteractiveLogonSid;
-extern SID PhSeLocalSystemSid;
-extern SID PhSeLocalServiceSid;
-extern SID PhSeNetworkServiceSid;
-
-// Characters
-
-extern BOOLEAN PhCharIsPrintable[256];
-extern ULONG PhCharToInteger[256];
-extern CHAR PhIntegerToChar[69];
-extern CHAR PhIntegerToCharUpper[69];
-
-// CRC32
-
-extern ULONG PhCrc32Table[256];
-
-// Enums
-
-extern WCHAR *PhIoPriorityHintNames[MaxIoPriorityTypes];
-extern WCHAR *PhKThreadStateNames[MaximumThreadState];
-extern WCHAR *PhKWaitReasonNames[MaximumWaitReason];
 
 // debugging
 
@@ -724,61 +680,72 @@ FORCEINLINE BOOLEAN PhTestInitOnce(
 PHLIBAPI
 PSTR
 NTAPI
-PhDuplicateAnsiStringZ(
+PhDuplicateBytesZ(
     _In_ PSTR String
     );
 
 PHLIBAPI
 PSTR
 NTAPI
-PhDuplicateAnsiStringZSafe(
+PhDuplicateBytesZSafe(
     _In_ PSTR String
     );
 
 PHLIBAPI
 PWSTR
 NTAPI
-PhDuplicateUnicodeStringZ(
+PhDuplicateStringZ(
     _In_ PWSTR String
     );
 
 PHLIBAPI
 BOOLEAN
 NTAPI
-PhCopyAnsiStringZ(
+PhCopyBytesZ(
     _In_ PSTR InputBuffer,
-    _In_ ULONG InputCount,
+    _In_ SIZE_T InputCount,
     _Out_writes_opt_z_(OutputCount) PSTR OutputBuffer,
-    _In_ ULONG OutputCount,
-    _Out_opt_ PULONG ReturnCount
+    _In_ SIZE_T OutputCount,
+    _Out_opt_ PSIZE_T ReturnCount
     );
 
 PHLIBAPI
 BOOLEAN
 NTAPI
-PhCopyUnicodeStringZ(
+PhCopyStringZ(
     _In_ PWSTR InputBuffer,
-    _In_ ULONG InputCount,
+    _In_ SIZE_T InputCount,
     _Out_writes_opt_z_(OutputCount) PWSTR OutputBuffer,
-    _In_ ULONG OutputCount,
-    _Out_opt_ PULONG ReturnCount
+    _In_ SIZE_T OutputCount,
+    _Out_opt_ PSIZE_T ReturnCount
     );
 
 PHLIBAPI
 BOOLEAN
 NTAPI
-PhCopyUnicodeStringZFromAnsi(
+PhCopyStringZFromBytes(
     _In_ PSTR InputBuffer,
-    _In_ ULONG InputCount,
+    _In_ SIZE_T InputCount,
     _Out_writes_opt_z_(OutputCount) PWSTR OutputBuffer,
-    _In_ ULONG OutputCount,
-    _Out_opt_ PULONG ReturnCount
+    _In_ SIZE_T OutputCount,
+    _Out_opt_ PSIZE_T ReturnCount
+    );
+
+PHLIBAPI
+BOOLEAN
+NTAPI
+PhCopyStringZFromMultiByte(
+    _In_ PSTR InputBuffer,
+    _In_ SIZE_T InputCount,
+    _Out_writes_opt_z_(OutputCount) PWSTR OutputBuffer,
+    _In_ SIZE_T OutputCount,
+    _Out_opt_ PSIZE_T ReturnCount
     );
 
 PHLIBAPI
 LONG
 NTAPI
-PhCompareUnicodeStringZNatural(
+PhCompareStringZNatural(
     _In_ PWSTR A,
     _In_ PWSTR B,
     _In_ BOOLEAN IgnoreCase
@@ -840,8 +807,6 @@ FORCEINLINE BOOLEAN PhEqualStringZ(
     }
 }
 
-#define PH_STRING_MAXLEN MAXUINT16
-
 typedef struct _PH_STRINGREF
 {
     /** The length, in bytes, of the string. */
@@ -850,22 +815,13 @@ typedef struct _PH_STRINGREF
     PWCH Buffer;
 } PH_STRINGREF, *PPH_STRINGREF;
 
-typedef struct _PH_ANSI_STRINGREF
+typedef struct _PH_BYTESREF
 {
-    union
-    {
-        struct
-        {
-            /** The length, in bytes, of the string. */
-            USHORT Length;
-            /** Unused and of an undefined value. */
-            USHORT Reserved;
-            /** The buffer containing the contents of the string. */
-            PCHAR Buffer;
-        };
-        ANSI_STRING as;
-    };
-} PH_ANSI_STRINGREF, *PPH_ANSI_STRINGREF;
+    /** The length, in bytes, of the string. */
+    SIZE_T Length;
+    /** The buffer containing the contents of the string. */
+    PCH Buffer;
+} PH_BYTESREF, *PPH_BYTESREF;
 
 typedef struct _PH_RELATIVE_STRINGREF
 {
@@ -876,6 +832,7 @@ typedef struct _PH_RELATIVE_STRINGREF
 } PH_RELATIVE_STRINGREF, *PPH_RELATIVE_STRINGREF;
 
 #define PH_STRINGREF_INIT(String) { sizeof(String) - sizeof(WCHAR), (String) }
+#define PH_BYTESREF_INIT(String) { sizeof(String) - sizeof(CHAR), (String) }
 
 FORCEINLINE VOID PhInitializeStringRef(
     _Out_ PPH_STRINGREF String,
@@ -884,6 +841,15 @@ FORCEINLINE VOID PhInitializeStringRef(
 {
     String->Length = wcslen(Buffer) * sizeof(WCHAR);
     String->Buffer = Buffer;
+}
+
+FORCEINLINE VOID PhInitializeBytesRef(
+    _Out_ PPH_BYTESREF Bytes,
+    _In_ PSTR Buffer
+    )
+{
+    Bytes->Length = strlen(Buffer) * sizeof(CHAR);
+    Bytes->Buffer = Buffer;
 }
 
 FORCEINLINE VOID PhInitializeEmptyStringRef(
@@ -1123,7 +1089,7 @@ FORCEINLINE VOID PhReverseStringRef(
 extern PPH_OBJECT_TYPE PhStringType;
 
 /**
- * A Unicode string object.
+ * A 16-bit string object, which supports UTF-16.
  *
  * \remarks The \a Length never includes the null terminator. Every
  * string must have a null terminator at the end, for compatibility
@@ -1171,21 +1137,6 @@ PPH_STRING
 NTAPI
 PhCreateStringEx(
     _In_opt_ PWCHAR Buffer,
-    _In_ SIZE_T Length
-    );
-
-PHLIBAPI
-PPH_STRING
-NTAPI
-PhCreateStringFromAnsi(
-    _In_ PSTR Buffer
-    );
-
-PHLIBAPI
-PPH_STRING
-NTAPI
-PhCreateStringFromAnsiEx(
-    _In_ PCHAR Buffer,
     _In_ SIZE_T Length
     );
 
@@ -1750,60 +1701,293 @@ FORCEINLINE VOID PhTrimToNullTerminatorString(
     String->Length = wcslen(String->Buffer) * sizeof(WCHAR);
 }
 
-// ansi string
+// byte string
 
-extern PPH_OBJECT_TYPE PhAnsiStringType;
+extern PPH_OBJECT_TYPE PhBytesType;
 
 /**
- * An ANSI string structure.
+ * An 8-bit string object, which supports ASCII, UTF-8 and Windows multi-byte encodings,
+ * as well as binary data.
  */
-typedef struct _PH_ANSI_STRING
+typedef struct _PH_BYTES
 {
+    // Header
     union
     {
-        /** An embedded ANSI_STRING structure. */
-        ANSI_STRING as;
-        PH_ANSI_STRINGREF asr;
+        PH_BYTESREF br;
         struct
         {
             /** The length, in bytes, of the string. */
-            USHORT Length;
-            /** Unused and always equal to \ref Length. */
-            USHORT MaximumLength;
-            /** Unused and always a pointer to \ref Buffer. */
-            PSTR Pointer;
+            SIZE_T Length;
+            /** The buffer containing the contents of the string. */
+            PCH Buffer;
         };
     };
-    /** The buffer containing the contents of the string. */
-    CHAR Buffer[1];
-} PH_ANSI_STRING, *PPH_ANSI_STRING;
+
+    // Data
+    union
+    {
+        CHAR Data[1];
+        struct
+        {
+            /** Reserved. */
+            ULONG AllocationFlags;
+            /** Reserved. */
+            PVOID Allocation;
+        };
+    };
+} PH_BYTES, *PPH_BYTES;
 
 PHLIBAPI
-PPH_ANSI_STRING
+PPH_BYTES
 NTAPI
-PhCreateAnsiString(
+PhCreateBytes(
     _In_ PSTR Buffer
     );
 
 PHLIBAPI
-PPH_ANSI_STRING
+PPH_BYTES
 NTAPI
-PhCreateAnsiStringEx(
+PhCreateBytesEx(
     _In_opt_ PCHAR Buffer,
     _In_ SIZE_T Length
     );
 
+// Unicode
+
+#define PH_UNICODE_BYTE_ORDER_MARK 0xfeff
+#define PH_UNICODE_MAX_CODE_POINT 0x10ffff
+
+#define PH_UNICODE_UTF16_TO_HIGH_SURROGATE(CodePoint) ((USHORT)((CodePoint) >> 10) + 0xd7c0)
+#define PH_UNICODE_UTF16_TO_LOW_SURROGATE(CodePoint) ((USHORT)((CodePoint) & 0x3ff) + 0xdc00)
+#define PH_UNICODE_UTF16_IS_HIGH_SURROGATE(CodeUnit) ((CodeUnit) >= 0xd800 && (CodeUnit) <= 0xdbff)
+#define PH_UNICODE_UTF16_IS_LOW_SURROGATE(CodeUnit) ((CodeUnit) >= 0xdc00 && (CodeUnit) <= 0xdfff)
+#define PH_UNICODE_UTF16_TO_CODE_POINT(HighSurrogate, LowSurrogate) (((ULONG)(HighSurrogate) << 10) + (ULONG)(LowSurrogate) - 0x35fdc00)
+
+#define PH_UNICODE_UTF8 0
+#define PH_UNICODE_UTF16 1
+#define PH_UNICODE_UTF32 2
+
+typedef struct _PH_UNICODE_DECODER
+{
+    UCHAR Encoding; // PH_UNICODE_*
+    UCHAR State;
+    UCHAR InputCount;
+    UCHAR Reserved;
+    union
+    {
+        UCHAR Utf8[4];
+        USHORT Utf16[2];
+        ULONG Utf32;
+    } Input;
+    union
+    {
+        struct
+        {
+            UCHAR Input[4];
+            UCHAR CodeUnit1;
+            UCHAR CodeUnit2;
+            UCHAR CodeUnit3;
+            UCHAR CodeUnit4;
+        } Utf8;
+        struct
+        {
+            USHORT Input[2];
+            USHORT CodeUnit;
+        } Utf16;
+        struct
+        {
+            ULONG Input;
+        } Utf32;
+    } u;
+} PH_UNICODE_DECODER, *PPH_UNICODE_DECODER;
+
+FORCEINLINE VOID PhInitializeUnicodeDecoder(
+    _Out_ PPH_UNICODE_DECODER Decoder,
+    _In_ UCHAR Encoding
+    )
+{
+    memset(Decoder, 0, sizeof(PH_UNICODE_DECODER));
+    Decoder->Encoding = Encoding;
+}
+
 PHLIBAPI
-PPH_ANSI_STRING
+BOOLEAN
 NTAPI
-PhCreateAnsiStringFromUnicode(
+PhWriteUnicodeDecoder(
+    _Inout_ PPH_UNICODE_DECODER Decoder,
+    _In_ ULONG CodeUnit
+    );
+
+PHLIBAPI
+BOOLEAN
+NTAPI
+PhDecodeUnicodeDecoder(
+    _Inout_ PPH_UNICODE_DECODER Decoder,
+    _Out_ PULONG CodePoint
+    );
+
+PHLIBAPI
+BOOLEAN
+NTAPI
+PhEncodeUnicode(
+    _In_ UCHAR Encoding,
+    _In_ ULONG CodePoint,
+    _Out_opt_ PVOID CodeUnits,
+    _Out_ PULONG NumberOfCodeUnits
+    );
+
+// 8-bit to UTF-16
+
+PHLIBAPI
+VOID
+NTAPI
+PhZeroExtendToUtf16InPlace(
+    _In_reads_bytes_(InputLength) PCH Input,
+    _In_ SIZE_T InputLength,
+    _Out_writes_bytes_(InputLength * sizeof(WCHAR)) PWCH Output
+    );
+
+PHLIBAPI
+PPH_STRING
+NTAPI
+PhZeroExtendToUtf16Ex(
+    _In_reads_bytes_(InputLength) PCH Input,
+    _In_ SIZE_T InputLength
+    );
+
+FORCEINLINE PPH_STRING PhZeroExtendToUtf16(
+    _In_ PSTR Input
+    )
+{
+    return PhZeroExtendToUtf16Ex(Input, strlen(Input));
+}
+
+// UTF-16 to ASCII
+
+PHLIBAPI
+PPH_BYTES
+NTAPI
+PhConvertUtf16ToAsciiEx(
+    _In_ PWCH Buffer,
+    _In_ SIZE_T Length,
+    _In_opt_ CHAR Replacement
+    );
+
+FORCEINLINE PPH_BYTES PhConvertUtf16ToAscii(
+    _In_ PWSTR Buffer,
+    _In_opt_ CHAR Replacement
+    )
+{
+    return PhConvertUtf16ToAsciiEx(Buffer, wcslen(Buffer) * sizeof(WCHAR), Replacement);
+}
+
+// Multi-byte to UTF-16
+// In-place: RtlMultiByteToUnicodeN, RtlMultiByteToUnicodeSize
+
+PHLIBAPI
+PPH_STRING
+NTAPI
+PhConvertMultiByteToUtf16(
+    _In_ PSTR Buffer
+    );
+
+PHLIBAPI
+PPH_STRING
+NTAPI
+PhConvertMultiByteToUtf16Ex(
+    _In_ PCHAR Buffer,
+    _In_ SIZE_T Length
+    );
+
+// UTF-16 to multi-byte
+// In-place: RtlUnicodeToMultiByteN, RtlUnicodeToMultiByteSize
+
+PHLIBAPI
+PPH_BYTES
+NTAPI
+PhConvertUtf16ToMultiByte(
     _In_ PWSTR Buffer
     );
 
 PHLIBAPI
-PPH_ANSI_STRING
+PPH_BYTES
 NTAPI
-PhCreateAnsiStringFromUnicodeEx(
+PhConvertUtf16ToMultiByteEx(
+    _In_ PWCHAR Buffer,
+    _In_ SIZE_T Length
+    );
+
+// UTF-8 to UTF-16
+
+PHLIBAPI
+BOOLEAN
+NTAPI
+PhConvertUtf8ToUtf16Size(
+    _Out_ PSIZE_T BytesInUtf16String,
+    _In_reads_bytes_(BytesInUtf8String) PCH Utf8String,
+    _In_ SIZE_T BytesInUtf8String
+    );
+
+PHLIBAPI
+BOOLEAN
+NTAPI
+PhConvertUtf8ToUtf16InPlace(
+    _Out_writes_bytes_to_(MaxBytesInUtf16String, *BytesInUtf16String) PWCH Utf16String,
+    _In_ SIZE_T MaxBytesInUtf16String,
+    _Out_opt_ PSIZE_T BytesInUtf16String,
+    _In_reads_bytes_(BytesInUtf8String) PCH Utf8String,
+    _In_ SIZE_T BytesInUtf8String
+    );
+
+PHLIBAPI
+PPH_STRING
+NTAPI
+PhConvertUtf8ToUtf16(
+    _In_ PSTR Buffer
+    );
+
+PHLIBAPI
+PPH_STRING
+NTAPI
+PhConvertUtf8ToUtf16Ex(
+    _In_ PCHAR Buffer,
+    _In_ SIZE_T Length
+    );
+
+// UTF-16 to UTF-8
+
+PHLIBAPI
+BOOLEAN
+NTAPI
+PhConvertUtf16ToUtf8Size(
+    _Out_ PSIZE_T BytesInUtf8String,
+    _In_reads_bytes_(BytesInUtf16String) PWCH Utf16String,
+    _In_ SIZE_T BytesInUtf16String
+    );
+
+PHLIBAPI
+BOOLEAN
+NTAPI
+PhConvertUtf16ToUtf8InPlace(
+    _Out_writes_bytes_to_(MaxBytesInUtf8String, *BytesInUtf8String) PCH Utf8String,
+    _In_ SIZE_T MaxBytesInUtf8String,
+    _Out_opt_ PSIZE_T BytesInUtf8String,
+    _In_reads_bytes_(BytesInUtf16String) PWCH Utf16String,
+    _In_ SIZE_T BytesInUtf16String
+    );
+
+PHLIBAPI
+PPH_BYTES
+NTAPI
+PhConvertUtf16ToUtf8(
+    _In_ PWSTR Buffer
+    );
+
+PHLIBAPI
+PPH_BYTES
+NTAPI
+PhConvertUtf16ToUtf8Ex(
     _In_ PWCHAR Buffer,
     _In_ SIZE_T Length
     );
@@ -2633,6 +2817,17 @@ FORCEINLINE ULONG PhHashInt64(
     return (ULONG)Value;
 }
 
+FORCEINLINE ULONG PhHashIntPtr(
+    _In_ ULONG_PTR Value
+    )
+{
+#ifdef _WIN64
+    return PhHashInt64(Value);
+#else
+    return PhHashInt32(Value);
+#endif
+}
+
 // simple hashtable
 
 typedef struct _PH_KEY_VALUE_PAIR
@@ -2690,12 +2885,12 @@ typedef struct _PH_FREE_LIST_ENTRY
     QUAD_PTR Body;
 } PH_FREE_LIST_ENTRY, *PPH_FREE_LIST_ENTRY;
 
-#ifdef _M_IX86
-C_ASSERT(FIELD_OFFSET(PH_FREE_LIST_ENTRY, ListEntry) == 0x0);
-C_ASSERT(FIELD_OFFSET(PH_FREE_LIST_ENTRY, Body) == 0x8);
-#else
+#ifdef _WIN64
 C_ASSERT(FIELD_OFFSET(PH_FREE_LIST_ENTRY, ListEntry) == 0x0);
 C_ASSERT(FIELD_OFFSET(PH_FREE_LIST_ENTRY, Body) == 0x10);
+#else
+C_ASSERT(FIELD_OFFSET(PH_FREE_LIST_ENTRY, ListEntry) == 0x0);
+C_ASSERT(FIELD_OFFSET(PH_FREE_LIST_ENTRY, Body) == 0x8);
 #endif
 
 PHLIBAPI
@@ -2936,20 +3131,13 @@ PhPrintTimeSpan(
 
 // format
 
-VOID
-PhZeroExtendToUnicode(
-    _In_reads_bytes_(InputLength) PSTR Input,
-    _In_ ULONG InputLength,
-    _Out_writes_bytes_(InputLength * 2) PWSTR Output
-    );
-
 typedef enum _PH_FORMAT_TYPE
 {
     CharFormatType,
     StringFormatType,
     StringZFormatType,
-    AnsiStringFormatType,
-    AnsiStringZFormatType,
+    MultiByteStringFormatType,
+    MultiByteStringZFormatType,
     Int32FormatType,
     Int64FormatType,
     IntPtrFormatType,
@@ -3027,8 +3215,8 @@ typedef struct _PH_FORMAT
         WCHAR Char;
         PH_STRINGREF String;
         PWSTR StringZ;
-        PH_ANSI_STRINGREF AnsiString;
-        PSTR AnsiStringZ;
+        PH_BYTESREF MultiByteString;
+        PSTR MultiByteStringZ;
         LONG Int32;
         LONG64 Int64;
         LONG_PTR IntPtr;
@@ -3045,7 +3233,7 @@ typedef struct _PH_FORMAT
 #define PhInitFormatC(f, v) do { (f)->Type = CharFormatType; (f)->u.Char = (v); } while (0)
 #define PhInitFormatS(f, v) do { (f)->Type = StringFormatType; PhInitializeStringRef(&(f)->u.String, (v)); } while (0)
 #define PhInitFormatSR(f, v) do { (f)->Type = StringFormatType; (f)->u.String = (v); } while (0)
-#define PhInitFormatAnsiS(f, v) do { (f)->Type = AnsiStringFormatType; PhInitializeAnsiStringRef(&(f)->u.AnsiString, (v)); } while (0)
+#define PhInitFormatMultiByteS(f, v) do { (f)->Type = MultiByteStringFormatType; PhInitializeBytesRef(&(f)->u.MultiByteString, (v)); } while (0)
 #define PhInitFormatD(f, v) do { (f)->Type = Int32FormatType; (f)->u.Int32 = (v); } while (0)
 #define PhInitFormatU(f, v) do { (f)->Type = UInt32FormatType; (f)->u.UInt32 = (v); } while (0)
 #define PhInitFormatX(f, v) do { (f)->Type = UInt32FormatType | FormatUseRadix; (f)->u.UInt32 = (v); (f)->Radix = 16; } while (0)
@@ -3578,6 +3766,55 @@ PhQueueItemGlobalWorkQueue(
     _In_ PTHREAD_START_ROUTINE Function,
     _In_opt_ PVOID Context
     );
+
+// data
+
+// SIDs
+
+extern SID PhSeNobodySid;
+
+extern SID PhSeEveryoneSid;
+
+extern SID PhSeLocalSid;
+
+extern SID PhSeCreatorOwnerSid;
+extern SID PhSeCreatorGroupSid;
+
+extern SID PhSeDialupSid;
+extern SID PhSeNetworkSid;
+extern SID PhSeBatchSid;
+extern SID PhSeInteractiveSid;
+extern SID PhSeServiceSid;
+extern SID PhSeAnonymousLogonSid;
+extern SID PhSeProxySid;
+extern SID PhSeAuthenticatedUserSid;
+extern SID PhSeRestrictedCodeSid;
+extern SID PhSeTerminalServerUserSid;
+extern SID PhSeRemoteInteractiveLogonSid;
+extern SID PhSeLocalSystemSid;
+extern SID PhSeLocalServiceSid;
+extern SID PhSeNetworkServiceSid;
+
+// Unicode
+
+extern PH_STRINGREF PhUnicodeByteOrderMark;
+
+// Characters
+
+extern BOOLEAN PhCharIsPrintable[256];
+extern ULONG PhCharToInteger[256];
+extern CHAR PhIntegerToChar[69];
+extern CHAR PhIntegerToCharUpper[69];
+
+// CRC32
+
+extern ULONG PhCrc32Table[256];
+
+// Enums
+
+extern WCHAR *PhIoPriorityHintNames[MaxIoPriorityTypes];
+extern WCHAR *PhKThreadStateNames[MaximumThreadState];
+extern WCHAR *PhKWaitReasonNames[MaximumWaitReason];
 
 #ifdef __cplusplus
 }

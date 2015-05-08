@@ -22,10 +22,10 @@ FORCEINLINE LONG_PTR _InterlockedExchangeAddPointer(
     _In_ LONG_PTR Value
     )
 {
-#ifdef _M_IX86
-    return (LONG_PTR)_InterlockedExchangeAdd((PLONG)Addend, (LONG)Value);
-#else
+#ifdef _WIN64
     return (LONG_PTR)_InterlockedExchangeAdd64((PLONG64)Addend, (LONG64)Value);
+#else
+    return (LONG_PTR)_InterlockedExchangeAdd((PLONG)Addend, (LONG)Value);
 #endif
 }
 
@@ -33,10 +33,10 @@ FORCEINLINE LONG_PTR _InterlockedIncrementPointer(
     _Inout_ LONG_PTR volatile *Addend
     )
 {
-#ifdef _M_IX86
-    return (LONG_PTR)_InterlockedIncrement((PLONG)Addend);
-#else
+#ifdef _WIN64
     return (LONG_PTR)_InterlockedIncrement64((PLONG64)Addend);
+#else
+    return (LONG_PTR)_InterlockedIncrement((PLONG)Addend);
 #endif
 }
 
@@ -44,10 +44,10 @@ FORCEINLINE LONG_PTR _InterlockedDecrementPointer(
     _Inout_ LONG_PTR volatile *Addend
     )
 {
-#ifdef _M_IX86
-    return (LONG_PTR)_InterlockedDecrement((PLONG)Addend);
-#else
+#ifdef _WIN64
     return (LONG_PTR)_InterlockedDecrement64((PLONG64)Addend);
+#else
+	return (LONG_PTR)_InterlockedDecrement((PLONG)Addend);
 #endif
 }
 
@@ -56,10 +56,10 @@ FORCEINLINE BOOLEAN _InterlockedBitTestAndResetPointer(
     _In_ LONG_PTR Bit
     )
 {
-#ifdef _M_IX86
-    return _interlockedbittestandreset((PLONG)Base, (LONG)Bit);
-#else
+#ifdef _WIN64
     return _interlockedbittestandreset64((PLONG64)Base, (LONG64)Bit);
+#else
+    return _interlockedbittestandreset((PLONG)Base, (LONG)Bit);
 #endif
 }
 
@@ -68,10 +68,10 @@ FORCEINLINE BOOLEAN _InterlockedBitTestAndSetPointer(
     _In_ LONG_PTR Bit
     )
 {
-#ifdef _M_IX86
-    return _interlockedbittestandset((PLONG)Base, (LONG)Bit);
-#else
+#ifdef _WIN64
     return _interlockedbittestandset64((PLONG64)Base, (LONG64)Bit);
+#else
+	return _interlockedbittestandset((PLONG)Base, (LONG)Bit);
 #endif
 }
 
@@ -554,7 +554,7 @@ typedef struct _TEB
 	PVOID SystemReserved1[54];
 	NTSTATUS ExceptionCode;
 	PVOID ActivationContextStackPointer;
-#ifdef _M_X64
+#ifdef _WIN64
 	UCHAR SpareBytes[24];
 #else
 	UCHAR SpareBytes[36];
@@ -590,7 +590,7 @@ typedef struct _TEB
 	PVOID DbgSsReserved[2];
 
 	ULONG HardErrorMode;
-#ifdef _M_X64
+#ifdef _WIN64
 	PVOID Instrumentation[11];
 #else
 	PVOID Instrumentation[9];
@@ -624,7 +624,7 @@ typedef struct _TEB
 	ULONG_PTR SoftPatchPtr1;
 	PVOID ThreadPoolData;
 	PPVOID TlsExpansionSlots;
-#ifdef _M_X64
+#ifdef _WIN64
 	PVOID DeallocationBStore;
 	PVOID BStoreLimit;
 #endif
@@ -785,8 +785,8 @@ typedef enum _PROCESSINFOCLASS
 	ProcessDebugPort, // q: HANDLE
 	ProcessExceptionPort, // s: HANDLE
 	ProcessAccessToken, // s: PROCESS_ACCESS_TOKEN
-	ProcessLdtInformation, // 10
-	ProcessLdtSize,
+	ProcessLdtInformation, // 10, qs: PROCESS_LDT_INFORMATION
+	ProcessLdtSize, // s: PROCESS_LDT_SIZE
 	ProcessDefaultHardErrorMode, // qs: ULONG
 	ProcessIoPortHandlers, // (kernel-mode only)
 	ProcessPooledUsageAndLimits, // q: POOLED_USAGE_AND_LIMITS
@@ -859,7 +859,7 @@ typedef enum _THREADINFOCLASS
 	ThreadBasePriority, // s: LONG
 	ThreadAffinityMask, // s: KAFFINITY
 	ThreadImpersonationToken, // s: HANDLE
-	ThreadDescriptorTableEntry,
+	ThreadDescriptorTableEntry, // q: DESCRIPTOR_TABLE_ENTRY (or WOW64_DESCRIPTOR_TABLE_ENTRY)
 	ThreadEnableAlignmentFaultFixup, // s: BOOLEAN
 	ThreadEventPair,
 	ThreadQuerySetWin32StartAddress, // q: PVOID

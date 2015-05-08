@@ -240,7 +240,7 @@ _ec:
 
 #if defined(_M_IX86)
     #include <PshPack4.h>
-#elif defined(_M_AMD64)
+#elif defined(_M_X64)
     #include <PshPack8.h>
 #else
     #error "not support."
@@ -272,7 +272,7 @@ static T_status InternalChangeBypassFilter(PHM_FILTER pFlt,__pfn_blpp_Hook_Bypas
 #if defined(_M_IX86)
     *((PT_Bit32u)&pFlt->FixCode[6]) = (T_Bit32u)Param;
     InterlockedExchangePointer((PT_void *)&pFlt->FixCode[24],pCallBack);
-#elif defined(_M_AMD64)
+#elif defined(_M_X64)
     *((PT_Bit64u)&pFlt->FixCode[36]) = (T_Bit64u)Param;
     InterlockedExchangePointer((PT_void *)&pFlt->FixCode[64],pCallBack);
 #else
@@ -366,7 +366,7 @@ T_status blpp_Hook_SetBypassFilter(PT_void Target,__pfn_blpp_Hook_BypassCallBack
     *((PT_Bit32u)&FixCode[24]) = (T_Bit32u)pCallBack;
     *((PT_Bit32u)&FixCode[32]) = (T_Bit32u)pFlt->FixCode+36;
     *((PT_Bit32u)&FixCode[36]) = (T_Bit32u)JumpBack;
-#elif defined(_M_AMD64)
+#elif defined(_M_X64)
     T_byte FixCode[] = 
     {
 /*
@@ -689,7 +689,7 @@ PT_void blpp_Hook_AllocSmartCallBackCode(PT_void Param,__pfn_blpp_Hook_SmartCall
     *((PT_Bit32u)&ShellCode[ 8]) = (T_Bit32u)JumpBack;
     *((PT_Bit32u)&ShellCode[15]) = (T_Bit32u)pCode + 20;
     *((PT_Bit32u)&ShellCode[20]) = (T_Bit32u)pCallBack;
-#elif defined(_M_AMD64)
+#elif defined(_M_X64)
     T_byte ShellCode[] = 
     {
         /* 00 */ 0x48,0xB9,0x77,0x77,0x77,0x77,0x88,0x88,0x88,0x88,  // mov rcx,??
