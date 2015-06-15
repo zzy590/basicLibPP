@@ -1,1 +1,6 @@
 processhacker svn last change 14:55:02, 2013年11月18日
+
+Revision: 6006
+Date: 2015年5月31日 17:42:33
+Message:
+Improve string APIs

@@ -2,7 +2,7 @@
  * Process Hacker -
  *   internal object manager
  *
- * Copyright (C) 2009 wj32
+ * Copyright (C) 2009-2015 wj32
  *
  * This file is part of Process Hacker.
  *
@@ -35,15 +35,15 @@ extern "C" {
 //#define PHOBJ_STRICT_CHECKS
 #define PHOBJ_ALLOCATE_NEVER_NULL
 
-/* Object flags */
+// Object flags
 #define PHOBJ_RAISE_ON_FAIL 0x00000001
 #define PHOBJ_VALID_FLAGS 0x00000001
 
-/* Object type flags */
+// Object type flags
 #define PHOBJTYPE_USE_FREE_LIST 0x00000001
 #define PHOBJTYPE_VALID_FLAGS 0x00000001
 
-/* Object type callbacks */
+// Object type callbacks
 
 /**
  * The delete procedure for an object type, called when
@@ -117,7 +117,7 @@ PhCreateObject(
     );
 
 PHLIBAPI
-VOID
+PVOID
 NTAPI
 PhReferenceObject(
     _In_ PVOID Object
@@ -199,6 +199,16 @@ PhGetObjectTypeInformation(
     _Out_ PPH_OBJECT_TYPE_INFORMATION Information
     );
 
+PHLIBAPI
+NTSTATUS
+NTAPI
+PhCreateAlloc(
+    _Out_ PVOID *Alloc,
+    _In_ SIZE_T Size
+    );
+
+// Object reference functions
+
 FORCEINLINE VOID PhSwapReference(
     _Inout_ PVOID *ObjectReference,
     _In_opt_ PVOID NewObject
@@ -213,7 +223,7 @@ FORCEINLINE VOID PhSwapReference(
     if (oldObject) PhDereferenceObject(oldObject);
 }
 
-FORCEINLINE VOID PhSwapReference2(
+FORCEINLINE VOID PhMoveReference(
     _Inout_ PVOID *ObjectReference,
     _In_opt_ _Assume_refs_(1) PVOID NewObject
     )
@@ -226,13 +236,24 @@ FORCEINLINE VOID PhSwapReference2(
     if (oldObject) PhDereferenceObject(oldObject);
 }
 
-PHLIBAPI
-NTSTATUS
-NTAPI
-PhCreateAlloc(
-    _Out_ PVOID *Alloc,
-    _In_ SIZE_T Size
-    );
+FORCEINLINE VOID PhSetReference(
+    _Out_ PVOID *ObjectReference,
+    _In_opt_ PVOID NewObject
+    )
+{
+    *ObjectReference = NewObject;
+
+    if (NewObject) PhReferenceObject(NewObject);
+}
+
+FORCEINLINE VOID PhClearReference(
+    _Inout_ PVOID *ObjectReference
+    )
+{
+    PhMoveReference(ObjectReference, NULL);
+}
+
+// Auto-dereference pool
 
 /** The size of the static array in an auto-release pool. */
 #define PH_AUTO_POOL_STATIC_SIZE 64
@@ -276,14 +297,6 @@ PhDeleteAutoPool(
     _Inout_ PPH_AUTO_POOL AutoPool
     );
 
-_May_raise_
-PHLIBAPI
-VOID
-NTAPI
-PhaDereferenceObject(
-    _In_ PVOID Object
-    );
-
 PHLIBAPI
 VOID
 NTAPI
@@ -291,23 +304,16 @@ PhDrainAutoPool(
     _In_ PPH_AUTO_POOL AutoPool
     );
 
-/**
- * Calls PhaDereferenceObject() and returns the given object.
- *
- * \param Object A pointer to an object. The value can be
- * null; in that case no action is performed.
- *
- * \return The value of \a Object.
- */
-FORCEINLINE PVOID PHA_DEREFERENCE(
-    _In_ PVOID Object
-    )
-{
-    if (Object)
-        PhaDereferenceObject(Object);
+_May_raise_
+PHLIBAPI
+PVOID
+NTAPI
+PhAutoDereferenceObject(
+    _In_opt_ PVOID Object
+    );
 
-    return Object;
-}
+/** Deprecated. Use PhAutoDereferenceObject instead. */
+PHLIBAPI VOID NTAPI PhaDereferenceObject(PVOID Object);
 
 #ifdef __cplusplus
 }

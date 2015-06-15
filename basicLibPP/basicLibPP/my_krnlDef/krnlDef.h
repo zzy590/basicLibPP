@@ -1,7 +1,7 @@
 
 /************************************************************************/
 /* NT OS Kernel Definition Author:zzy                                   */
-/* Date: 2013年11月22日                                                 */
+/* Date: 2015年6月15日                                                  */
 /************************************************************************/
 
 #pragma once
@@ -18,88 +18,88 @@ extern "C" {
 typedef PVOID *PPVOID;
 
 FORCEINLINE LONG_PTR _InterlockedExchangeAddPointer(
-    _Inout_ LONG_PTR volatile *Addend,
-    _In_ LONG_PTR Value
-    )
+	_Inout_ _Interlocked_operand_ LONG_PTR volatile *Addend,
+	_In_ LONG_PTR Value
+	)
 {
 #ifdef _WIN64
-    return (LONG_PTR)_InterlockedExchangeAdd64((PLONG64)Addend, (LONG64)Value);
+	return (LONG_PTR)_InterlockedExchangeAdd64((PLONG64)Addend, (LONG64)Value);
 #else
-    return (LONG_PTR)_InterlockedExchangeAdd((PLONG)Addend, (LONG)Value);
+	return (LONG_PTR)_InterlockedExchangeAdd((PLONG)Addend, (LONG)Value);
 #endif
 }
 
 FORCEINLINE LONG_PTR _InterlockedIncrementPointer(
-    _Inout_ LONG_PTR volatile *Addend
-    )
+	_Inout_ _Interlocked_operand_ LONG_PTR volatile *Addend
+	)
 {
 #ifdef _WIN64
-    return (LONG_PTR)_InterlockedIncrement64((PLONG64)Addend);
+	return (LONG_PTR)_InterlockedIncrement64((PLONG64)Addend);
 #else
-    return (LONG_PTR)_InterlockedIncrement((PLONG)Addend);
+	return (LONG_PTR)_InterlockedIncrement((PLONG)Addend);
 #endif
 }
 
 FORCEINLINE LONG_PTR _InterlockedDecrementPointer(
-    _Inout_ LONG_PTR volatile *Addend
-    )
+	_Inout_ _Interlocked_operand_ LONG_PTR volatile *Addend
+	)
 {
 #ifdef _WIN64
-    return (LONG_PTR)_InterlockedDecrement64((PLONG64)Addend);
+	return (LONG_PTR)_InterlockedDecrement64((PLONG64)Addend);
 #else
 	return (LONG_PTR)_InterlockedDecrement((PLONG)Addend);
 #endif
 }
 
 FORCEINLINE BOOLEAN _InterlockedBitTestAndResetPointer(
-    _Inout_ LONG_PTR volatile *Base,
-    _In_ LONG_PTR Bit
-    )
+	_Inout_ _Interlocked_operand_ LONG_PTR volatile *Base,
+	_In_ LONG_PTR Bit
+	)
 {
 #ifdef _WIN64
-    return _interlockedbittestandreset64((PLONG64)Base, (LONG64)Bit);
+	return _interlockedbittestandreset64((PLONG64)Base, (LONG64)Bit);
 #else
-    return _interlockedbittestandreset((PLONG)Base, (LONG)Bit);
+	return _interlockedbittestandreset((PLONG)Base, (LONG)Bit);
 #endif
 }
 
 FORCEINLINE BOOLEAN _InterlockedBitTestAndSetPointer(
-    _Inout_ LONG_PTR volatile *Base,
-    _In_ LONG_PTR Bit
-    )
+	_Inout_ _Interlocked_operand_ LONG_PTR volatile *Base,
+	_In_ LONG_PTR Bit
+	)
 {
 #ifdef _WIN64
-    return _interlockedbittestandset64((PLONG64)Base, (LONG64)Bit);
+	return _interlockedbittestandset64((PLONG64)Base, (LONG64)Bit);
 #else
 	return _interlockedbittestandset((PLONG)Base, (LONG)Bit);
 #endif
 }
 
 FORCEINLINE BOOLEAN _InterlockedIncrementNoZero(
-    _Inout_ LONG volatile *Addend
-    )
+	_Inout_ _Interlocked_operand_ LONG volatile *Addend
+	)
 {
-    LONG value;
-    LONG newValue;
+	LONG value;
+	LONG newValue;
 
-    value = *Addend;
+	value = *Addend;
 
-    while (TRUE)
-    {
-        if (value == 0)
-            return FALSE;
+	while (TRUE)
+	{
+		if (value == 0)
+			return FALSE;
 
-        if ((newValue = _InterlockedCompareExchange(
-            Addend,
-            value + 1,
-            value
-            )) == value)
-        {
-            return TRUE;
-        }
+		if ((newValue = _InterlockedCompareExchange(
+			Addend,
+			value + 1,
+			value
+			)) == value)
+		{
+			return TRUE;
+		}
 
-        value = newValue;
-    }
+		value = newValue;
+	}
 }
 
 //
@@ -181,13 +181,13 @@ typedef struct _OBJECT_ATTRIBUTES
 typedef const OBJECT_ATTRIBUTES *PCOBJECT_ATTRIBUTES;
 
 #define InitializeObjectAttributes(p, n, a, r, s) { \
-	(p)->Length = sizeof(OBJECT_ATTRIBUTES); \
-	(p)->RootDirectory = r; \
-	(p)->Attributes = a; \
-	(p)->ObjectName = n; \
-	(p)->SecurityDescriptor = s; \
-	(p)->SecurityQualityOfService = NULL; \
-}
+    (p)->Length = sizeof(OBJECT_ATTRIBUTES); \
+    (p)->RootDirectory = r; \
+    (p)->Attributes = a; \
+    (p)->ObjectName = n; \
+    (p)->SecurityDescriptor = s; \
+    (p)->SecurityQualityOfService = NULL; \
+    }
 
 #define RTL_CONSTANT_OBJECT_ATTRIBUTES(n, a) { sizeof(OBJECT_ATTRIBUTES), NULL, n, a, NULL, NULL }
 #define RTL_INIT_OBJECT_ATTRIBUTES(n, a) RTL_CONSTANT_OBJECT_ATTRIBUTES(n, a)
@@ -203,40 +203,40 @@ NTSYSCALLAPI
 NTSTATUS
 NTAPI
 NtCreateKeyedEvent(
-    _Out_ PHANDLE KeyedEventHandle,
-    _In_ ACCESS_MASK DesiredAccess,
-    _In_opt_ POBJECT_ATTRIBUTES ObjectAttributes,
-    _In_ ULONG Flags
-    );
+_Out_ PHANDLE KeyedEventHandle,
+_In_ ACCESS_MASK DesiredAccess,
+_In_opt_ POBJECT_ATTRIBUTES ObjectAttributes,
+_In_ ULONG Flags
+);
 
 NTSYSCALLAPI
 NTSTATUS
 NTAPI
 NtOpenKeyedEvent(
-    _Out_ PHANDLE KeyedEventHandle,
-    _In_ ACCESS_MASK DesiredAccess,
-    _In_ POBJECT_ATTRIBUTES ObjectAttributes
-    );
+_Out_ PHANDLE KeyedEventHandle,
+_In_ ACCESS_MASK DesiredAccess,
+_In_ POBJECT_ATTRIBUTES ObjectAttributes
+);
 
 NTSYSCALLAPI
 NTSTATUS
 NTAPI
 NtReleaseKeyedEvent(
-    _In_ HANDLE KeyedEventHandle,
-    _In_ PVOID KeyValue,
-    _In_ BOOLEAN Alertable,
-    _In_opt_ PLARGE_INTEGER Timeout
-    );
+_In_ HANDLE KeyedEventHandle,
+_In_ PVOID KeyValue,
+_In_ BOOLEAN Alertable,
+_In_opt_ PLARGE_INTEGER Timeout
+);
 
 NTSYSCALLAPI
 NTSTATUS
 NTAPI
 NtWaitForKeyedEvent(
-    _In_ HANDLE KeyedEventHandle,
-    _In_ PVOID KeyValue,
-    _In_ BOOLEAN Alertable,
-    _In_opt_ PLARGE_INTEGER Timeout
-    );
+_In_ HANDLE KeyedEventHandle,
+_In_ PVOID KeyValue,
+_In_ BOOLEAN Alertable,
+_In_opt_ PLARGE_INTEGER Timeout
+);
 
 typedef enum _OBJECT_INFORMATION_CLASS
 {
@@ -372,6 +372,7 @@ typedef struct _RTL_USER_PROCESS_PARAMETERS
 	ULONG EnvironmentVersion;
 	PVOID PackageDependencyData;
 	ULONG ProcessGroupId;
+	ULONG LoaderThreads;
 } RTL_USER_PROCESS_PARAMETERS, *PRTL_USER_PROCESS_PARAMETERS;
 
 typedef struct _PEB
@@ -431,7 +432,7 @@ typedef struct _PEB
 	ULONG TlsBitmapBits[2];
 	PVOID ReadOnlySharedMemoryBase;
 	PVOID HotpatchInformation;
-	PPVOID ReadOnlyStaticServerData;
+	PVOID *ReadOnlyStaticServerData;
 	PVOID AnsiCodePageData;
 	PVOID OemCodePageData;
 	PVOID UnicodeCaseTableData;
@@ -447,7 +448,7 @@ typedef struct _PEB
 
 	ULONG NumberOfHeaps;
 	ULONG MaximumNumberOfHeaps;
-	PPVOID ProcessHeaps;
+	PVOID *ProcessHeaps;
 
 	PVOID GdiSharedHandleTable;
 	PVOID ProcessStarterHelper;
@@ -486,7 +487,7 @@ typedef struct _PEB
 
 	SIZE_T MinimumStackCommit;
 
-	PPVOID FlsCallback;
+	PVOID *FlsCallback;
 	LIST_ENTRY FlsListHead;
 	PVOID FlsBitmap;
 	ULONG FlsBitmapBits[FLS_MAXIMUM_AVAILABLE / (sizeof(ULONG) * 8)];
@@ -623,7 +624,7 @@ typedef struct _TEB
 	PVOID SavedPriorityState;
 	ULONG_PTR SoftPatchPtr1;
 	PVOID ThreadPoolData;
-	PPVOID TlsExpansionSlots;
+	PVOID *TlsExpansionSlots;
 #ifdef _WIN64
 	PVOID DeallocationBStore;
 	PVOID BStoreLimit;
@@ -681,6 +682,8 @@ typedef struct _TEB
 #define ZwCurrentProcess() NtCurrentProcess()
 #define NtCurrentThread() ((HANDLE)(LONG_PTR)-2)
 #define ZwCurrentThread() NtCurrentThread()
+#define NtCurrentSession() ((HANDLE)(LONG_PTR)-3)
+#define ZwCurrentSession() NtCurrentSession()
 #define NtCurrentPeb() (NtCurrentTeb()->ProcessEnvironmentBlock)
 
 // Not NT, but useful.
@@ -726,6 +729,8 @@ typedef struct _OBJECT_TYPE_INFORMATION
 	ULONG ValidAccessMask;
 	BOOLEAN SecurityRequired;
 	BOOLEAN MaintainHandleCount;
+	UCHAR TypeIndex; // since WINBLUE
+	CHAR ReservedByte;
 	ULONG PoolType;
 	ULONG DefaultPagedPoolCharge;
 	ULONG DefaultNonPagedPoolCharge;
@@ -757,7 +762,8 @@ typedef struct _PROCESS_EXTENDED_BASIC_INFORMATION
 			ULONG IsFrozen : 1;
 			ULONG IsBackground : 1;
 			ULONG IsStronglyNamed : 1;
-			ULONG SpareBits : 25;
+			ULONG IsSecureProcess : 1;
+			ULONG SpareBits : 24;
 		};
 	};
 } PROCESS_EXTENDED_BASIC_INFORMATION, *PPROCESS_EXTENDED_BASIC_INFORMATION;
@@ -766,19 +772,19 @@ NTSYSCALLAPI
 NTSTATUS
 NTAPI
 NtQueryObject(
-    _In_ HANDLE Handle,
-    _In_ OBJECT_INFORMATION_CLASS ObjectInformationClass,
-    PVOID ObjectInformation,
-    _In_ ULONG ObjectInformationLength,
-    _Out_opt_ PULONG ReturnLength
-    );
+_In_ HANDLE Handle,
+_In_ OBJECT_INFORMATION_CLASS ObjectInformationClass,
+_Out_writes_bytes_opt_(ObjectInformationLength) PVOID ObjectInformation,
+_In_ ULONG ObjectInformationLength,
+_Out_opt_ PULONG ReturnLength
+);
 
 typedef enum _PROCESSINFOCLASS
 {
 	ProcessBasicInformation, // 0, q: PROCESS_BASIC_INFORMATION, PROCESS_EXTENDED_BASIC_INFORMATION
 	ProcessQuotaLimits, // qs: QUOTA_LIMITS, QUOTA_LIMITS_EX
 	ProcessIoCounters, // q: IO_COUNTERS
-	ProcessVmCounters, // q: VM_COUNTERS, VM_COUNTERS_EX
+	ProcessVmCounters, // q: VM_COUNTERS, VM_COUNTERS_EX, VM_COUNTERS_EX2
 	ProcessTimes, // q: KERNEL_USER_TIMES
 	ProcessBasePriority, // s: KPRIORITY
 	ProcessRaisePriority, // s: ULONG
@@ -837,6 +843,16 @@ typedef enum _PROCESSINFOCLASS
 	ProcessCheckStackExtentsMode,
 	ProcessCommandLineInformation, // 60, q: UNICODE_STRING
 	ProcessProtectionInformation, // q: PS_PROTECTION
+	ProcessMemoryExhaustion, // PROCESS_MEMORY_EXHAUSTION_INFO // since THRESHOLD
+	ProcessFaultInformation, // PROCESS_FAULT_INFORMATION
+	ProcessTelemetryIdInformation, // PROCESS_TELEMETRY_ID_INFORMATION
+	ProcessCommitReleaseInformation, // PROCESS_COMMIT_RELEASE_INFORMATION
+	ProcessDefaultCpuSetsInformation,
+	ProcessAllowedCpuSetsInformation,
+	ProcessReserved1Information,
+	ProcessReserved2Information,
+	ProcessSubsystemProcess, // 70
+	ProcessJobMemoryInformation, // PROCESS_JOB_MEMORY_INFO
 	MaxProcessInfoClass
 } PROCESSINFOCLASS;
 
@@ -844,12 +860,12 @@ NTSYSCALLAPI
 NTSTATUS
 NTAPI
 NtQueryInformationProcess(
-    _In_ HANDLE ProcessHandle,
-    _In_ PROCESSINFOCLASS ProcessInformationClass,
-    PVOID ProcessInformation,
-    _In_ ULONG ProcessInformationLength,
-    _Out_opt_ PULONG ReturnLength
-    );
+_In_ HANDLE ProcessHandle,
+_In_ PROCESSINFOCLASS ProcessInformationClass,
+_Out_writes_bytes_(ProcessInformationLength) PVOID ProcessInformation,
+_In_ ULONG ProcessInformationLength,
+_Out_opt_ PULONG ReturnLength
+);
 
 typedef enum _THREADINFOCLASS
 {
@@ -889,6 +905,12 @@ typedef enum _THREADINFOCLASS
 	ThreadIdealProcessorEx, // q: PROCESSOR_NUMBER
 	ThreadCpuAccountingInformation, // since WIN8
 	ThreadSuspendCount, // since WINBLUE
+	ThreadHeterogeneousCpuPolicy, // KHETERO_CPU_POLICY // since THRESHOLD
+	ThreadContainerId,
+	ThreadNameInformation,
+	ThreadProperty,
+	ThreadSelectedCpuSets,
+	ThreadSystemThreadInformation,
 	MaxThreadInfoClass
 } THREADINFOCLASS;
 
@@ -896,72 +918,72 @@ NTSYSCALLAPI
 NTSTATUS
 NTAPI
 NtQueryInformationThread(
-    _In_ HANDLE ThreadHandle,
-    _In_ THREADINFOCLASS ThreadInformationClass,
-    PVOID ThreadInformation,
-    _In_ ULONG ThreadInformationLength,
-    _Out_opt_ PULONG ReturnLength
-    );
+_In_ HANDLE ThreadHandle,
+_In_ THREADINFOCLASS ThreadInformationClass,
+_Out_writes_bytes_(ThreadInformationLength) PVOID ThreadInformation,
+_In_ ULONG ThreadInformationLength,
+_Out_opt_ PULONG ReturnLength
+);
 
 NTSYSCALLAPI
 NTSTATUS
 NTAPI
 NtSetInformationThread(
-    _In_ HANDLE ThreadHandle,
-    _In_ THREADINFOCLASS ThreadInformationClass,
-    PVOID ThreadInformation,
-    _In_ ULONG ThreadInformationLength
-    );
+_In_ HANDLE ThreadHandle,
+_In_ THREADINFOCLASS ThreadInformationClass,
+_In_reads_bytes_(ThreadInformationLength) PVOID ThreadInformation,
+_In_ ULONG ThreadInformationLength
+);
 
 NTSYSCALLAPI
 NTSTATUS
 NTAPI
 NtQueryInformationToken(
-    _In_ HANDLE TokenHandle,
-    _In_ TOKEN_INFORMATION_CLASS TokenInformationClass,
-    PVOID TokenInformation,
-    _In_ ULONG TokenInformationLength,
-    _Out_ PULONG ReturnLength
-    );
+_In_ HANDLE TokenHandle,
+_In_ TOKEN_INFORMATION_CLASS TokenInformationClass,
+_Out_writes_bytes_(TokenInformationLength) PVOID TokenInformation,
+_In_ ULONG TokenInformationLength,
+_Out_ PULONG ReturnLength
+);
 
 NTSYSCALLAPI
 NTSTATUS
 NTAPI
 NtSetInformationToken(
-    _In_ HANDLE TokenHandle,
-    _In_ TOKEN_INFORMATION_CLASS TokenInformationClass,
-    PVOID TokenInformation,
-    _In_ ULONG TokenInformationLength
-    );
+_In_ HANDLE TokenHandle,
+_In_ TOKEN_INFORMATION_CLASS TokenInformationClass,
+_In_reads_bytes_(TokenInformationLength) PVOID TokenInformation,
+_In_ ULONG TokenInformationLength
+);
 
 NTSYSCALLAPI
 NTSTATUS
 NTAPI
 NtOpenProcessToken(
-    _In_ HANDLE ProcessHandle,
-    _In_ ACCESS_MASK DesiredAccess,
-    _Out_ PHANDLE TokenHandle
-    );
+_In_ HANDLE ProcessHandle,
+_In_ ACCESS_MASK DesiredAccess,
+_Out_ PHANDLE TokenHandle
+);
 
 NTSYSCALLAPI
 NTSTATUS
 NTAPI
 NtSetSecurityObject(
-    _In_ HANDLE Handle,
-    _In_ SECURITY_INFORMATION SecurityInformation,
-    _In_ PSECURITY_DESCRIPTOR SecurityDescriptor
-    );
+_In_ HANDLE Handle,
+_In_ SECURITY_INFORMATION SecurityInformation,
+_In_ PSECURITY_DESCRIPTOR SecurityDescriptor
+);
 
 NTSYSCALLAPI
 NTSTATUS
 NTAPI
 NtQuerySecurityObject(
-    _In_ HANDLE Handle,
-    _In_ SECURITY_INFORMATION SecurityInformation,
-    PSECURITY_DESCRIPTOR SecurityDescriptor,
-    _In_ ULONG Length,
-    _Out_ PULONG LengthNeeded
-    );
+_In_ HANDLE Handle,
+_In_ SECURITY_INFORMATION SecurityInformation,
+_Out_writes_bytes_opt_(Length) PSECURITY_DESCRIPTOR SecurityDescriptor,
+_In_ ULONG Length,
+_Out_ PULONG LengthNeeded
+);
 
 #define SYMBOLIC_LINK_QUERY 0x0001
 #define SYMBOLIC_LINK_ALL_ACCESS (STANDARD_RIGHTS_REQUIRED | 0x1)
@@ -970,28 +992,28 @@ NTSYSCALLAPI
 NTSTATUS
 NTAPI
 NtOpenSymbolicLinkObject(
-    _Out_ PHANDLE LinkHandle,
-    _In_ ACCESS_MASK DesiredAccess,
-    _In_ POBJECT_ATTRIBUTES ObjectAttributes
-    );
+_Out_ PHANDLE LinkHandle,
+_In_ ACCESS_MASK DesiredAccess,
+_In_ POBJECT_ATTRIBUTES ObjectAttributes
+);
 
 NTSYSCALLAPI
 NTSTATUS
 NTAPI
 NtQuerySymbolicLinkObject(
-    _In_ HANDLE LinkHandle,
-    _Inout_ PUNICODE_STRING LinkTarget,
-    _Out_opt_ PULONG ReturnedLength
-    );
+_In_ HANDLE LinkHandle,
+_Inout_ PUNICODE_STRING LinkTarget,
+_Out_opt_ PULONG ReturnedLength
+);
 
 NTSYSAPI
 NTSTATUS
 NTAPI
 RtlConvertSidToUnicodeString(
-    _Inout_ PUNICODE_STRING UnicodeString,
-    _In_ PSID Sid,
-    _In_ BOOLEAN AllocateDestinationString
-    );
+_Inout_ PUNICODE_STRING UnicodeString,
+_In_ PSID Sid,
+_In_ BOOLEAN AllocateDestinationString
+);
 
 // System info.
 
@@ -1138,22 +1160,40 @@ typedef enum _SYSTEM_INFORMATION_CLASS
 	SystemMemoryTopologyInformation,
 	SystemMemoryChannelInformation,
 	SystemBootLogoInformation, // 140
-	SystemProcessorPerformanceInformationEx, // since WINBLUE
+	SystemProcessorPerformanceInformationEx, // q: SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION_EX // since WINBLUE
 	SystemSpare0,
 	SystemSecureBootPolicyInformation,
-	SystemPageFileInformationEx,
+	SystemPageFileInformationEx, // q: SYSTEM_PAGEFILE_INFORMATION_EX
 	SystemSecureBootInformation,
 	SystemEntropyInterruptTimingRawInformation,
 	SystemPortableWorkspaceEfiLauncherInformation,
 	SystemFullProcessInformation, // q: SYSTEM_PROCESS_INFORMATION with SYSTEM_PROCESS_INFORMATION_EXTENSION (requires admin)
-	SystemKernelDebuggerInformationEx,
+	SystemKernelDebuggerInformationEx, // q: SYSTEM_KERNEL_DEBUGGER_INFORMATION_EX
 	SystemBootMetadataInformation, // 150
 	SystemSoftRebootInformation,
 	SystemElamCertificateInformation,
 	SystemOfflineDumpConfigInformation,
-	SystemProcessorFeaturesInformation,
+	SystemProcessorFeaturesInformation, // q: SYSTEM_PROCESSOR_FEATURES_INFORMATION
 	SystemRegistryReconciliationInformation,
 	SystemEdidInformation,
+	SystemManufacturingInformation, // q: SYSTEM_MANUFACTURING_INFORMATION // since THRESHOLD
+	SystemEnergyEstimationConfigInformation, // q: SYSTEM_ENERGY_ESTIMATION_CONFIG_INFORMATION
+	SystemHypervisorDetailInformation, // q: SYSTEM_HYPERVISOR_DETAIL_INFORMATION
+	SystemProcessorCycleStatsInformation, // q: SYSTEM_PROCESSOR_CYCLE_STATS_INFORMATION // 160
+	SystemVmGenerationCountInformation,
+	SystemTrustedPlatformModuleInformation, // q: SYSTEM_TPM_INFORMATION
+	SystemKernelDebuggerFlags,
+	SystemCodeIntegrityPolicyInformation,
+	SystemIsolatedUserModeInformation,
+	SystemHardwareSecurityTestInterfaceResultsInformation,
+	SystemSingleModuleInformation, // q: SYSTEM_SINGLE_MODULE_INFORMATION
+	SystemAllowedCpuSetsInformation,
+	SystemDmaProtectionInformation,
+	SystemInterruptCpuSetsInformation,
+	SystemSecureBootPolicyFullInformation,
+	SystemCodeIntegrityPolicyFullInformation,
+	SystemAffinitizedInterruptProcessorInformation,
+	SystemRootSiloInformation, // q: SYSTEM_ROOT_SILO_INFORMATION
 	MaxSystemInfoClass
 } SYSTEM_INFORMATION_CLASS;
 
@@ -1240,7 +1280,7 @@ typedef struct _SYSTEM_EXTENDED_THREAD_INFORMATION
 	PVOID StackBase;
 	PVOID StackLimit;
 	PVOID Win32StartAddress;
-	PTEB TebBase;
+	PTEB TebBase; // since VISTA
 	ULONG_PTR Reserved2;
 	ULONG_PTR Reserved3;
 	ULONG_PTR Reserved4;
@@ -1289,11 +1329,11 @@ NTSYSCALLAPI
 NTSTATUS
 NTAPI
 NtQuerySystemInformation(
-    _In_ SYSTEM_INFORMATION_CLASS SystemInformationClass,
-    PVOID SystemInformation,
-    _In_ ULONG SystemInformationLength,
-    _Out_opt_ PULONG ReturnLength
-    );
+_In_ SYSTEM_INFORMATION_CLASS SystemInformationClass,
+_Out_writes_bytes_opt_(SystemInformationLength) PVOID SystemInformation,
+_In_ ULONG SystemInformationLength,
+_Out_opt_ PULONG ReturnLength
+);
 
 #ifdef __cplusplus
 } // extern "C" {

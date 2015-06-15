@@ -35,7 +35,7 @@ using namespace std;
 //////////////////////////////////////////////////////////////////////////
 
 
-#define VERSION_ZZY ((T_Dword)1000005)
+#define VERSION_ZZY ((T_Dword)1000100)
 
 #ifdef Config_DBG
     #define DBG_PRINT(_x) cout<<_x<<endl;
@@ -114,8 +114,8 @@ T_void blpp_mem_closeFastAllocator(PBLPP_FAST_ALLOCATOR_CONTEXT pCtx);
 PT_void blpp_mem_allocateFromFastAllocator(PBLPP_FAST_ALLOCATOR_CONTEXT pCtx);
 T_void blpp_mem_freeToFastAllocator(PBLPP_FAST_ALLOCATOR_CONTEXT pCtx,PT_void Ptr);
 
-T_void blpp_Hash_MD5(PCT_void input,int ilen,T_byte output[16]);
-T_void blpp_Hash_SHA256(PCT_void input,int ilen,T_byte output[32],T_bool is224);
+T_void blpp_Hash_MD5(PCT_void input,size_t ilen,T_byte output[16]);
+T_void blpp_Hash_SHA256(PCT_void input,size_t ilen,T_byte output[32],T_bool is224);
 
 T_bool blpp_TextEncode_AnsiToUnicode(PCT_str pszA, PT_wstr *ppszW); // Need free by blpp_mem_free.
 T_bool blpp_TextEncode_UnicodeToAnsi(PCT_wstr pszW,PT_str *ppszA); // Need free by blpp_mem_free.

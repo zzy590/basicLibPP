@@ -89,8 +89,8 @@ BASIC_LIB_PP_API T_void blpp_mem_freeToFastAllocator(PBLPP_FAST_ALLOCATOR_CONTEX
 // Hash.
 //
 
-BASIC_LIB_PP_API T_void blpp_Hash_MD5(PCT_void input,int ilen,T_byte output[16]);
-BASIC_LIB_PP_API T_void blpp_Hash_SHA256(PCT_void input,int ilen,T_byte output[32],T_bool is224);
+BASIC_LIB_PP_API T_void blpp_Hash_MD5(PCT_void input,size_t ilen,T_byte output[16]);
+BASIC_LIB_PP_API T_void blpp_Hash_SHA256(PCT_void input,size_t ilen,T_byte output[32],T_bool is224);
 
 //
 // Text encoder.

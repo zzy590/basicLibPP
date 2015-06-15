@@ -1,2 +1,4 @@
 produced by zzy
-learn by detour
+learn by detours
+
+update to detours 316
