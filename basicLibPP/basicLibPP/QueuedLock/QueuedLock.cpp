@@ -231,7 +231,7 @@ FORCEINLINE BOOLEAN LOCK_pPushQueuedWaitBlock
     }
     *Optimize = optimize;
     *CurrentValue = newValue;
-    newValue = (ULONG_PTR)_InterlockedCompareExchangePointer((PPVOID)&QueuedLock->Value,(PVOID)newValue,(PVOID)Value);
+    newValue = (ULONG_PTR)_InterlockedCompareExchangePointer((PVOID *)&QueuedLock->Value,(PVOID)newValue,(PVOID)Value);
     *NewValue = newValue;
     return newValue == Value;
 }
@@ -417,7 +417,7 @@ FORCEINLINE VOID LOCK_pOptimizeQueuedLockListEx
         }
         // Try to clear the traversing bit.
         newValue = value - LOCK_QUEUED_LOCK_TRAVERSING;
-        if ((newValue = (ULONG_PTR)_InterlockedCompareExchangePointer((PPVOID)&QueuedLock->Value,(PVOID)newValue,(PVOID)value)) == value)
+        if ((newValue = (ULONG_PTR)_InterlockedCompareExchangePointer((PVOID *)&QueuedLock->Value,(PVOID)newValue,(PVOID)value)) == value)
         {
             break;
         }
@@ -487,7 +487,7 @@ FORCEINLINE PLOCK_QUEUED_WAIT_BLOCK LOCK_pPrepareToWakeQueuedLock
         while (!IgnoreOwned && (value & LOCK_QUEUED_LOCK_OWNED))
         {
             newValue = value - LOCK_QUEUED_LOCK_TRAVERSING;
-            if ((newValue = (ULONG_PTR)_InterlockedCompareExchangePointer((PPVOID)&QueuedLock->Value,(PVOID)newValue,(PVOID)value)) == value)
+            if ((newValue = (ULONG_PTR)_InterlockedCompareExchangePointer((PVOID *)&QueuedLock->Value,(PVOID)newValue,(PVOID)value)) == value)
             {
                 return NULL;
             }
@@ -540,7 +540,7 @@ FORCEINLINE PLOCK_QUEUED_WAIT_BLOCK LOCK_pPrepareToWakeQueuedLock
             // is only one waiter, or we are waking
             // a shared waiter and possibly others.
             newValue = 0;
-            if ((newValue = (ULONG_PTR)_InterlockedCompareExchangePointer((PPVOID)&QueuedLock->Value,(PVOID)newValue,(PVOID)value)) == value)
+            if ((newValue = (ULONG_PTR)_InterlockedCompareExchangePointer((PVOID *)&QueuedLock->Value,(PVOID)newValue,(PVOID)value)) == value)
             {
                 break;
             }
@@ -636,7 +636,7 @@ VOID __fastcall LOCK_fAcquireQueuedLockExclusive
     {
         if (!(value & LOCK_QUEUED_LOCK_OWNED))
         {
-            if ((newValue = (ULONG_PTR)_InterlockedCompareExchangePointer((PPVOID)&QueuedLock->Value,(PVOID)(value + LOCK_QUEUED_LOCK_OWNED),(PVOID)value)) == value)
+            if ((newValue = (ULONG_PTR)_InterlockedCompareExchangePointer((PVOID *)&QueuedLock->Value,(PVOID)(value + LOCK_QUEUED_LOCK_OWNED),(PVOID)value)) == value)
             {
                 break;
             }
@@ -682,7 +682,7 @@ VOID __fastcall LOCK_fAcquireQueuedLockShared
         if (!(value & LOCK_QUEUED_LOCK_WAITERS) && (!(value & LOCK_QUEUED_LOCK_OWNED) || (LOCK_GetQueuedLockSharedOwners(value) > 0)))
         {
             newValue = (value + LOCK_QUEUED_LOCK_SHARED_INC) | LOCK_QUEUED_LOCK_OWNED;
-            if ((newValue = (ULONG_PTR)_InterlockedCompareExchangePointer((PPVOID)&QueuedLock->Value,(PVOID)newValue,(PVOID)value)) == value)
+            if ((newValue = (ULONG_PTR)_InterlockedCompareExchangePointer((PVOID *)&QueuedLock->Value,(PVOID)newValue,(PVOID)value)) == value)
             {
                 break;
             }
@@ -728,7 +728,7 @@ VOID __fastcall LOCK_fReleaseQueuedLockExclusive
             // If someone is traversing the list, clearing the owned bit
             // is a signal for them to wake waiters.
             newValue = value - LOCK_QUEUED_LOCK_OWNED;
-            if ((newValue = (ULONG_PTR)_InterlockedCompareExchangePointer((PPVOID)&QueuedLock->Value,(PVOID)newValue,(PVOID)value)) == value)
+            if ((newValue = (ULONG_PTR)_InterlockedCompareExchangePointer((PVOID *)&QueuedLock->Value,(PVOID)newValue,(PVOID)value)) == value)
             {
                 break;
             }
@@ -739,7 +739,7 @@ VOID __fastcall LOCK_fReleaseQueuedLockExclusive
             // Try to set the traversing bit and wake waiters.
             newValue = value - LOCK_QUEUED_LOCK_OWNED + LOCK_QUEUED_LOCK_TRAVERSING;
             currentValue = newValue;
-            if ((newValue = (ULONG_PTR)_InterlockedCompareExchangePointer((PPVOID)&QueuedLock->Value,(PVOID)newValue,(PVOID)value)) == value)
+            if ((newValue = (ULONG_PTR)_InterlockedCompareExchangePointer((PVOID *)&QueuedLock->Value,(PVOID)newValue,(PVOID)value)) == value)
             {
                 LOCK_pfWakeQueuedLock(QueuedLock, currentValue);
                 break;
@@ -776,7 +776,7 @@ VOID __fastcall LOCK_fReleaseQueuedLockShared
         {
             newValue = 0;
         }
-        if ((newValue = (ULONG_PTR)_InterlockedCompareExchangePointer((PPVOID)&QueuedLock->Value,(PVOID)newValue,(PVOID)value)) == value)
+        if ((newValue = (ULONG_PTR)_InterlockedCompareExchangePointer((PVOID *)&QueuedLock->Value,(PVOID)newValue,(PVOID)value)) == value)
         {
             return;
         }
@@ -797,7 +797,7 @@ VOID __fastcall LOCK_fReleaseQueuedLockShared
         if (value & LOCK_QUEUED_LOCK_TRAVERSING)
         {
             newValue = value & ~(LOCK_QUEUED_LOCK_OWNED | LOCK_QUEUED_LOCK_MULTIPLE_SHARED);
-            if ((newValue = (ULONG_PTR)_InterlockedCompareExchangePointer((PPVOID)&QueuedLock->Value,(PVOID)newValue,(PVOID)value)) == value)
+            if ((newValue = (ULONG_PTR)_InterlockedCompareExchangePointer((PVOID *)&QueuedLock->Value,(PVOID)newValue,(PVOID)value)) == value)
             {
                 break;
             }
@@ -806,7 +806,7 @@ VOID __fastcall LOCK_fReleaseQueuedLockShared
         {
             newValue = (value & ~(LOCK_QUEUED_LOCK_OWNED | LOCK_QUEUED_LOCK_MULTIPLE_SHARED)) | LOCK_QUEUED_LOCK_TRAVERSING;
             currentValue = newValue;
-            if ((newValue = (ULONG_PTR)_InterlockedCompareExchangePointer((PPVOID)&QueuedLock->Value,(PVOID)newValue,(PVOID)value)) == value)
+            if ((newValue = (ULONG_PTR)_InterlockedCompareExchangePointer((PVOID *)&QueuedLock->Value,(PVOID)newValue,(PVOID)value)) == value)
             {
                 LOCK_pfWakeQueuedLock(QueuedLock, currentValue);
                 break;
@@ -835,7 +835,7 @@ VOID __fastcall LOCK_fWakeForReleaseQueuedLock
 {
     ULONG_PTR newValue;
     newValue = Value + LOCK_QUEUED_LOCK_TRAVERSING;
-    if ((ULONG_PTR)_InterlockedCompareExchangePointer((PPVOID)&QueuedLock->Value,(PVOID)newValue,(PVOID)Value) == Value)
+    if ((ULONG_PTR)_InterlockedCompareExchangePointer((PVOID *)&QueuedLock->Value,(PVOID)newValue,(PVOID)Value) == Value)
     {
         LOCK_pfWakeQueuedLock(QueuedLock, newValue);
     }

@@ -3,69 +3,107 @@
 
 #include "../basic_fun.h"
 
-#define BYPASS_DEF_A "sysA"
-#define BYPASS_LNK_A "\\\\.\\sysA"
-#define BYPASS_DEF_W L"sysW"
-#define BYPASS_LNK_W L"\\\\.\\sysW"
+#include <strsafe.h>
+
+#define FS_BYPASS_DEFINE_PREFIX_A "blpp_"
+#define FS_BYPASS_DEFINE_PREFIX_W L"blpp_"
 
 class filePathLinkA
 {
 private:
-    string m_TmpPathDef;
-    string m_TmpPathLink;
-    string m_TmpFilePath;
-    char m_TmpNumber[20];
+	string m_ntType;
+	string m_pathDefine;
+	string m_pathLink;
+	bool m_transformed;
 public:
-    filePathLinkA(PCT_str lpFileName)
-        :m_TmpPathDef(BYPASS_DEF_A),m_TmpPathLink(BYPASS_LNK_A),m_TmpFilePath("\\??\\")
-    {
-        static T_Dword tick = 0;
-        _ltoa_s(GetTickCount()*GetCurrentThreadId()+(++tick),m_TmpNumber,20,16);
-        m_TmpFilePath.append(lpFileName);
-        m_TmpPathDef.append(m_TmpNumber);
-        m_TmpPathLink.append(m_TmpNumber);
-    }
-    ~filePathLinkA()
-    {
-        DWORD LastError = GetLastError();
-        DefineDosDeviceA(DDD_REMOVE_DEFINITION,m_TmpPathDef.c_str(),m_TmpFilePath.c_str());
-        SetLastError(LastError);
-    }
-    const string &getLink()
-    {
-        DefineDosDeviceA(DDD_RAW_TARGET_PATH,m_TmpPathDef.c_str(),m_TmpFilePath.c_str());
-        return m_TmpPathLink;
-    }
+	filePathLinkA(const string& path) :m_ntType("\\??\\")
+	{
+		if (path.length() > 4 && path.substr(0, 4) == "\\??\\")
+		{
+			m_ntType.append(path.substr(4));
+		}
+		else
+		{
+			m_ntType.append(path);
+		}
+		static DWORD tick = 0;
+		char tmpBuffer[100];
+		StringCbPrintfA(tmpBuffer, 100, "%x%x%x%x", GetCurrentThreadId(), GetTickCount(), rand(), ++tick);
+		m_pathDefine = string(FS_BYPASS_DEFINE_PREFIX_A) + tmpBuffer;
+		if (DefineDosDeviceA(DDD_RAW_TARGET_PATH, m_pathDefine.c_str(), m_ntType.c_str()))
+		{
+			m_pathLink = string("\\\\.\\") + FS_BYPASS_DEFINE_PREFIX_A + tmpBuffer;
+			m_transformed = true;
+		}
+		else
+		{
+			m_pathLink = path;
+			m_transformed = false;
+		}
+	}
+	~filePathLinkA()
+	{
+		if (m_transformed)
+		{
+			DWORD err = GetLastError();
+			DefineDosDeviceA(DDD_REMOVE_DEFINITION, m_pathDefine.c_str(), m_ntType.c_str());
+			SetLastError(err);
+		}
+	}
+
+	const string& getLink() const
+	{
+		return m_pathLink;
+	}
 };
 
 class filePathLinkW
 {
 private:
-    wstring m_TmpPathDef;
-    wstring m_TmpPathLink;
-    wstring m_TmpFilePath;
-    wchar_t m_TmpNumber[20];
+	wstring m_ntType;
+	wstring m_pathDefine;
+	wstring m_pathLink;
+	bool m_transformed;
 public:
-    filePathLinkW(PCT_wstr lpFileName)
-        :m_TmpPathDef(BYPASS_DEF_W),m_TmpPathLink(BYPASS_LNK_W),m_TmpFilePath(L"\\??\\")
-    {
-        static T_Dword tick = 0;
-        _ltow_s(GetTickCount()*GetCurrentThreadId()+(++tick),m_TmpNumber,20,16);
-        m_TmpFilePath.append(lpFileName);
-        m_TmpPathDef.append(m_TmpNumber);
-        m_TmpPathLink.append(m_TmpNumber);
-    }
-    ~filePathLinkW()
-    {
-        DWORD LastError = GetLastError();
-        DefineDosDeviceW(DDD_REMOVE_DEFINITION,m_TmpPathDef.c_str(),m_TmpFilePath.c_str());
-        SetLastError(LastError);
-    }
-    const wstring &getLink()
-    {
-        DefineDosDeviceW(DDD_RAW_TARGET_PATH,m_TmpPathDef.c_str(),m_TmpFilePath.c_str());
-        return m_TmpPathLink;
-    }
+	filePathLinkW(const wstring& path) :m_ntType(L"\\??\\")
+	{
+		if (path.length() > 4 && path.substr(0, 4) == L"\\??\\")
+		{
+			m_ntType.append(path.substr(4));
+		}
+		else
+		{
+			m_ntType.append(path);
+		}
+		static DWORD tick = 0;
+		wchar_t tmpBuffer[100];
+		StringCbPrintfW(tmpBuffer, 100, L"%x%x%x%x", GetCurrentThreadId(), GetTickCount(), rand(), ++tick);
+		m_pathDefine = wstring(FS_BYPASS_DEFINE_PREFIX_W) + tmpBuffer;
+		if (DefineDosDeviceW(DDD_RAW_TARGET_PATH, m_pathDefine.c_str(), m_ntType.c_str()))
+		{
+			m_pathLink = wstring(L"\\\\.\\") + FS_BYPASS_DEFINE_PREFIX_W + tmpBuffer;
+			m_transformed = true;
+		}
+		else
+		{
+			m_pathLink = path;
+			m_transformed = false;
+		}
+	}
+	~filePathLinkW()
+	{
+		if (m_transformed)
+		{
+			DWORD err = GetLastError();
+			DefineDosDeviceW(DDD_REMOVE_DEFINITION, m_pathDefine.c_str(), m_ntType.c_str());
+			SetLastError(err);
+		}
+	}
+
+	const wstring& getLink() const
+	{
+		return m_pathLink;
+	}
 };
 
 HANDLE blpp_fs_CreateFileBypassA(PCT_str lpPathName,DWORD dwDesiredAccess,DWORD dwShareMode,DWORD dwCreationDisposition,DWORD dwFlagsAndAttributes)
@@ -122,7 +160,7 @@ T_bool blpp_fs_DeleteFileBypassA(PCT_str lpFileName)
 {
     HANDLE hf;
     hf = blpp_fs_CreateFileBypassA(lpFileName,DELETE,FILE_SHARE_READ|FILE_SHARE_WRITE,OPEN_EXISTING,FILE_FLAG_DELETE_ON_CLOSE);
-    if (INVALID_HANDLE_VALUE == hf)
+	if (hf != INVALID_HANDLE_VALUE)
     {
         CloseHandle(hf);
         return TRUE;
@@ -134,7 +172,7 @@ T_bool blpp_fs_DeleteFileBypassW(PCT_wstr lpFileName)
 {
     HANDLE hf;
     hf = blpp_fs_CreateFileBypassW(lpFileName,DELETE,FILE_SHARE_READ|FILE_SHARE_WRITE,OPEN_EXISTING,FILE_FLAG_DELETE_ON_CLOSE);
-    if (INVALID_HANDLE_VALUE == hf)
+	if (hf != INVALID_HANDLE_VALUE)
     {
         CloseHandle(hf);
         return TRUE;
@@ -175,7 +213,7 @@ T_bool blpp_fs_GetFileAttributesBypassA(PT_str lpPathName,PDWORD pAttr)
     {
         *pAttr = Attr;
     }
-    return (INVALID_FILE_ATTRIBUTES != GetLastError());
+	return INVALID_FILE_ATTRIBUTES != Attr;
 }
 
 T_bool blpp_fs_GetFileAttributesBypassW(PT_wstr lpPathName,PDWORD pAttr)
@@ -187,7 +225,7 @@ T_bool blpp_fs_GetFileAttributesBypassW(PT_wstr lpPathName,PDWORD pAttr)
     {
         *pAttr = Attr;
     }
-    return (INVALID_FILE_ATTRIBUTES != GetLastError());
+	return INVALID_FILE_ATTRIBUTES != Attr;
 }
 
 T_bool blpp_fs_SetFileAttributesBypassA(PT_str lpPathName,DWORD dwAttr)

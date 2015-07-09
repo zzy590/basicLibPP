@@ -22,6 +22,13 @@ BASIC_LIB_PP_API T_Dword blpp_version();
 BASIC_LIB_PP_API T_bool blpp_isInternalThread(T_Dword Tid);
 
 //
+// Init once.
+//
+
+BASIC_LIB_PP_API T_bool blpp_initOnce(PT_void volatile *inited); // Return TRUE if not initialized.
+BASIC_LIB_PP_API T_void blpp_initError(PT_void volatile *inited);
+
+//
 // Lock.
 //
 
@@ -132,7 +139,9 @@ typedef enum _blpp_System_OSVersionEnum
     WIN_VISTA,
     WIN_7,
     WIN_8,
-	WIN_BLUE, // Windows 8.1
+	WIN_8_1, // Windows BLUE
+	WIN_10,
+	WIN_NEW
 } blpp_System_OSVersionEnum;
 
 BASIC_LIB_PP_API blpp_System_OSVersionEnum blpp_System_GetCurrentOs();
@@ -315,7 +324,7 @@ BASIC_LIB_PP_API T_void blpp_Hook_FreeSmartCallBackCode(PT_void pCode);
 BASIC_LIB_PP_API T_bool blpp_Tls_FlagOn(T_address Flag);
 BASIC_LIB_PP_API T_bool blpp_Tls_SetFlag(T_address Flag);
 BASIC_LIB_PP_API T_bool blpp_Tls_ClearFlag(T_address Flag);
-BASIC_LIB_PP_API T_bool blpp_Tls_CheckAndSetFlag(T_address Flag);
+BASIC_LIB_PP_API T_bool blpp_Tls_CheckAndSetFlag(T_address Flag); // If flag is on,return FALSE.
 
 //
 // Tray

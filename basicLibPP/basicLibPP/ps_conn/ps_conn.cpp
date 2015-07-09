@@ -138,17 +138,21 @@ PT_void blpp_Payload_FindNativePack(PCT_str Identity,PT_Dword DataLength)
     PT_byte pbLast = NULL;
     MEMORY_BASIC_INFORMATION mbi;
     T_byte MD5[16];
-    blpp_Hash_MD5(Identity,(int)strlen(Identity),MD5);
+    blpp_Hash_MD5(Identity,strlen(Identity),MD5);
     ZeroMemory(&mbi,sizeof(mbi));
     //
     // Find the next memory region that contains a mapped PE image.
     //
     for (;; pbLast = (PT_byte)mbi.BaseAddress + mbi.RegionSize)
     {
-        if (VirtualQuery(pbLast,&mbi,sizeof(mbi)) <= 0)
+        if (0 == VirtualQuery(pbLast,&mbi,sizeof(mbi)))
         {
             break;
         }
+		if ((mbi.RegionSize & 0xfff) == 0xfff)
+		{
+			break;
+		}
         if (((PBYTE)mbi.BaseAddress + mbi.RegionSize) < pbLast)
         {
             break;
@@ -206,7 +210,7 @@ PT_void blpp_Payload_AddNativePack(PCT_str Identity,PCT_void Data,T_Dword DataLe
     }
     memcpy(pPayload+1,Data,DataLength);
     // Set head and sign at last.
-    blpp_Hash_MD5(Identity,(int)strlen(Identity),pPayload->SignMD5);
+    blpp_Hash_MD5(Identity,strlen(Identity),pPayload->SignMD5);
     pPayload->DataLength = DataLength;
     pPayload->Signature = PAYLOAD_PACK_SIGNATURE;
     return pPayload+1;
@@ -222,17 +226,21 @@ PT_void blpp_Payload_FindRemotePack(HANDLE hProcess,PCT_str Identity,PT_Dword Da
     PT_byte pbLast = NULL;
     MEMORY_BASIC_INFORMATION mbi;
     T_byte MD5[16];
-    blpp_Hash_MD5(Identity,(int)strlen(Identity),MD5);
+    blpp_Hash_MD5(Identity,strlen(Identity),MD5);
     ZeroMemory(&mbi,sizeof(mbi));
     //
     // Find the next memory region that contains a mapped PE image.
     //
     for (;; pbLast = (PT_byte)mbi.BaseAddress + mbi.RegionSize)
     {
-        if (VirtualQueryEx(hProcess,pbLast,&mbi,sizeof(mbi)) <= 0)
+        if (0 == VirtualQueryEx(hProcess,pbLast,&mbi,sizeof(mbi)))
         {
             break;
         }
+		if ((mbi.RegionSize & 0xfff) == 0xfff)
+		{
+			break;
+		}
         if (((PBYTE)mbi.BaseAddress + mbi.RegionSize) < pbLast)
         {
             break;
@@ -301,7 +309,7 @@ PT_void blpp_Payload_AddRemotePack(HANDLE hProcess,PCT_str Identity,PCT_void pDa
     }
     PAYLOAD_PACK pp;
     pp.Signature = PAYLOAD_PACK_SIGNATURE;
-    blpp_Hash_MD5(Identity,(int)strlen(Identity),pp.SignMD5);
+    blpp_Hash_MD5(Identity,strlen(Identity),pp.SignMD5);
     pp.DataLength = DataLength;
     // Write head at last.
     if (!WriteProcessMemory(hProcess,pbBase,&pp,sizeof(PAYLOAD_PACK),&cbWrote) || (cbWrote != sizeof(PAYLOAD_PACK)))

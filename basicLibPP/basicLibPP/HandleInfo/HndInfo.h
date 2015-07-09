@@ -73,5 +73,4 @@ NTSTATUS ObjGetHandleInformation
     __out_opt PCLIENT_ID BestId
 );
 
-void ObjInit();
 void ObjUninit();

@@ -65,6 +65,9 @@ void tmpMemFree(void *p,void *address);
 T_Dword blpp_version();
 T_bool blpp_isInternalThread(T_Dword Tid);
 
+T_bool blpp_initOnce(PT_void volatile *inited); // Return TRUE if not initialized.
+T_void blpp_initError(PT_void volatile *inited);
+
 class AutoQueuedLock
 {
 private:
@@ -145,7 +148,9 @@ typedef enum _blpp_System_OSVersionEnum
     WIN_VISTA,
     WIN_7,
     WIN_8,
-	WIN_BLUE, // Windows 8.1
+	WIN_8_1, // Windows BLUE
+	WIN_10,
+	WIN_NEW
 } blpp_System_OSVersionEnum;
 
 blpp_System_OSVersionEnum blpp_System_GetCurrentOs();
@@ -185,7 +190,7 @@ T_void FreeSelectedTls(T_Dword tls);
 T_bool IsThreadFlagOn(T_Dword Tls,T_address Flag);
 T_bool SetThreadFlag(T_Dword Tls,T_address Flag);
 T_bool ClearThreadFlag(T_Dword Tls,T_address Flag);
-T_bool CheckAndSetThreadFlag(T_Dword Tls,T_address Flag);
+T_bool CheckAndSetThreadFlag(T_Dword Tls,T_address Flag); // If flag is on,return FALSE.
 
 typedef struct _BLPP_TRAY_CONTEXT *PBLPP_TRAY_CONTEXT;
 T_bool blpp_Tray_ChangeIcon(PBLPP_TRAY_CONTEXT pCtx,HICON hIcon);

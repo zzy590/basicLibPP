@@ -35,11 +35,15 @@ public:
     {
         memcpy(m_md5,md5,16);
     }
-    Cmd5TreeNode(const Cmd5TreeNode &another)
+    Cmd5TreeNode(const Cmd5TreeNode& another)
     {
         memcpy(m_md5,another.m_md5,16);
     }
-    bool operator<(const Cmd5TreeNode &another) const
+	const Cmd5TreeNode& operator=(const Cmd5TreeNode& another)
+	{
+		memcpy(m_md5, another.m_md5, 16);
+	}
+    bool operator<(const Cmd5TreeNode& another) const
     {
         PT_Bit32u l1,l2;
         l1 = (PT_Bit32u)m_md5;
@@ -57,7 +61,7 @@ public:
         }
         return false;
     }
-    bool operator==(const Cmd5TreeNode &another) const
+    bool operator==(const Cmd5TreeNode& another) const
     {
         PT_Bit32u l1,l2;
         l1 = (PT_Bit32u)m_md5;
@@ -82,13 +86,13 @@ public:
     friend class Cmd5Tree;
     CdataNode(const void *data,T_Dword length)
     {
-        m_data = new T_byte [length];
+		m_data = new T_byte[length + 1];
         m_length = length;
         memcpy(m_data,data,m_length);
     }
-    CdataNode(const CdataNode &another)
+    CdataNode(const CdataNode& another)
     {
-        m_data = new T_byte [another.m_length];
+		m_data = new T_byte[another.m_length + 1];
         m_length = another.m_length;
         memcpy(m_data,another.m_data,m_length);
     }
@@ -96,10 +100,10 @@ public:
     {
         delete [] m_data;
     }
-    const CdataNode &operator=(const CdataNode &another)
+    const CdataNode &operator=(const CdataNode& another)
     {
         delete [] m_data;
-        m_data = new T_byte [another.m_length];
+		m_data = new T_byte[another.m_length + 1];
         m_length = another.m_length;
         memcpy(m_data,another.m_data,m_length);
         return *this;
@@ -173,7 +177,7 @@ public:
             {
                 return false;
             }
-            if (!WriteFile(hFile,it->second.m_data,it->second.m_length,&re,NULL) || re!=it->second.m_length)
+			if (!WriteFile(hFile, it->second.m_data, DataLength, &re, NULL) || re != DataLength)
             {
                 return false;
             }
@@ -189,7 +193,11 @@ public:
             T_byte md5[16];
             if (!ReadFile(hFile,md5,16,&re,NULL) || re!=16)
             {
-                return true;
+				if (0 == re)
+				{
+					return true;
+				}
+				return false;
             }
             T_Dword DataLength;
             if (!ReadFile(hFile,&DataLength,sizeof(T_Dword),&re,NULL) || re!=sizeof(T_Dword))

@@ -17,63 +17,24 @@ using namespace std;
 // Hack thread context.
 //
 
-#define OBJ_QUERY_HACK_MAX_THREADS 20
-
-typedef void(*PUSER_ROUTINE)(LPVOID lparam);
-
-typedef struct _OBJ_CALL_WITH_TIMEOUT_THREAD_CONTEXT
-{
-	SLIST_ENTRY ListEntry;
-
-	PUSER_ROUTINE Routine;
-	PVOID Context;
-
-	HANDLE StartEventHandle;
-	HANDLE CompletedEventHandle;
-
-	HANDLE ThreadHandle;
-	DWORD ThreadId;
-	PVOID Fiber;
-} OBJ_CALL_WITH_TIMEOUT_THREAD_CONTEXT, *POBJ_CALL_WITH_TIMEOUT_THREAD_CONTEXT;
-
 typedef enum _OBJ_QUERY_OBJECT_WORK
 {
-	NtQueryObjectWork,
-	NtQuerySecurityObjectWork,
-	NtSetSecurityObjectWork
+    QueryNameHack,
+    QuerySecurityHack,
+    SetSecurityHack
 } OBJ_QUERY_OBJECT_WORK;
 
-typedef struct _OBJ_QUERY_OBJECT_COMMON_CONTEXT
+typedef struct _OBJ_QUERY_OBJECT_CONTEXT
 {
-	OBJ_QUERY_OBJECT_WORK Work;
-	NTSTATUS Status;
-
-	union
-	{
-		struct
-		{
-			HANDLE Handle;
-			OBJECT_INFORMATION_CLASS ObjectInformationClass;
-			PVOID ObjectInformation;
-			ULONG ObjectInformationLength;
-			PULONG ReturnLength;
-		} NtQueryObject;
-		struct
-		{
-			HANDLE Handle;
-			SECURITY_INFORMATION SecurityInformation;
-			PSECURITY_DESCRIPTOR SecurityDescriptor;
-			ULONG Length;
-			PULONG LengthNeeded;
-		} NtQuerySecurityObject;
-		struct
-		{
-			HANDLE Handle;
-			SECURITY_INFORMATION SecurityInformation;
-			PSECURITY_DESCRIPTOR SecurityDescriptor;
-		} NtSetSecurityObject;
-	} u;
-} OBJ_QUERY_OBJECT_COMMON_CONTEXT, *POBJ_QUERY_OBJECT_COMMON_CONTEXT;
+    BOOL Initialized;
+    OBJ_QUERY_OBJECT_WORK Work;
+    HANDLE Handle;
+    SECURITY_INFORMATION SecurityInformation;
+    PVOID Buffer;
+    ULONG Length;
+    NTSTATUS Status;
+    ULONG ReturnLength;
+} OBJ_QUERY_OBJECT_CONTEXT, *POBJ_QUERY_OBJECT_CONTEXT;
 
 //
 // Device Mup prefixes.
@@ -108,19 +69,56 @@ static wstring ObjDosDevicePrefix[OBJ_MAX_DEVICE_COUNT][OBJ_DEVICE_PREFIX_TYPE_C
 static BLPP_QUEUED_LOCK ObjDevicePrefixLock = BLPP_QUEUED_LOCK_INIT;
 
 //
-// Local value for async threads.
+// Local value for other thread acquire.
 //
 
-static bool ObjCallWithTimeoutThreadInited = false;
-static SLIST_HEADER ObjCallWithTimeoutThreadListHead;
-static HANDLE ObjThreadReleaseEvent = NULL;
-static BLPP_QUEUED_LOCK ObjAcquireThreadLock = BLPP_QUEUED_LOCK_INIT;
+static BLPP_QUEUED_LOCK ObjQueryObjectMutex = BLPP_QUEUED_LOCK_INIT;
+static HANDLE ObjQueryObjectThreadHandle = NULL;
+static DWORD ObjQueryObjectThreadId = 0;
+static PVOID ObjQueryObjectFiber = NULL;
+static HANDLE ObjQueryObjectStartEvent = NULL;
+static HANDLE ObjQueryObjectCompletedEvent = NULL;
+static OBJ_QUERY_OBJECT_CONTEXT ObjQueryObjectContext = {0};
 
 //
 // Map for type recognize.
 //
 
-static map<wstring,OBJ_OBJECT_TYPE> ObjTypeMap;
+class WideString
+{
+private:
+    wstring m_wstr;
+public:
+    WideString(){}
+    WideString(const wchar_t *str):m_wstr(str){}
+    WideString(const wstring &str):m_wstr(str){}
+    WideString(const WideString &another):m_wstr(another.m_wstr){}
+    bool operator<(const WideString &another) const
+    {
+        size_t s1,s2;
+        s1 = m_wstr.length();
+        s2 = another.m_wstr.length();
+        if (s1 == s2)
+        {
+            if (memcmp(m_wstr.data(),another.m_wstr.data(),s1) < 0)
+            {
+                return true;
+            }
+            return false;
+        }
+        return s1<s2;
+    }
+    bool operator==(const WideString &another) const
+    {
+        return (0==m_wstr.compare(another.m_wstr));
+    }
+    bool operator!=(const WideString &another) const
+    {
+        return (0!=m_wstr.compare(another.m_wstr));
+    }
+};
+
+map<WideString,OBJ_OBJECT_TYPE> ObjTypeMap;
 const static PT_wchar TypeNameList[] =
 {
     L"Unknown",
@@ -165,10 +163,11 @@ const static PT_wchar TypeNameList[] =
     L"Type",
     L"UserApcReserve",
     L"WindowStation",
-    L"WmiGuid"
+    L"WmiGuid",
+    NULL
 };
 
-C_ASSERT(sizeof(TypeNameList) == OBJ_TYPE_ALL_COUNT*sizeof(PT_wstr));
+C_ASSERT(sizeof(TypeNameList) == (OBJ_TYPE_ALL_COUNT+1)*sizeof(PT_wstr));
 
 //
 // Function.
@@ -194,18 +193,9 @@ static NTSTATUS ObjpGetObjectBasicInformation
 static NTSTATUS ObjpGetObjectTypeName
 (
     __in HANDLE Handle,
-    __out wstring& TypeName,
-	__out OBJ_OBJECT_TYPE& objType
+    __out wstring &TypeName
 )
 {
-	static PT_void inited = NULL;
-	if (blpp_initOnce(&inited))
-	{
-		for (int i = 0; i < OBJ_TYPE_ALL_COUNT; ++i)
-		{
-			ObjTypeMap.insert(pair<wstring, OBJ_OBJECT_TYPE>(TypeNameList[i], (OBJ_OBJECT_TYPE)i));
-		}
-	}
     NTSTATUS status;
     POBJECT_TYPE_INFORMATION buffer;
     ULONG returnLength = 0;
@@ -221,316 +211,31 @@ static NTSTATUS ObjpGetObjectTypeName
         return STATUS_INSUFFICIENT_RESOURCES;
     }
     status = NtQueryObject(Handle,ObjectTypeInformation,buffer,returnLength,&returnLength);
-    if (NT_SUCCESS(status))
+    if (!NT_SUCCESS(status))
     {
-		TypeName = wstring(buffer->TypeName.Buffer, buffer->TypeName.Length / sizeof(WCHAR));
-		// Decode type
-		map<wstring, OBJ_OBJECT_TYPE>::const_iterator cit = ObjTypeMap.find(TypeName);
-		if (cit != ObjTypeMap.end())
-		{
-			objType = cit->second;
-		}
-		else
-		{
-			objType = OBJ_TYPE_Unknown;
-		}
+        blpp_mem_free(buffer);
+        return status;
     }
-	blpp_mem_free(buffer);
-	return status;
-}
-
-//
-// Hack.
-//
-
-static POBJ_CALL_WITH_TIMEOUT_THREAD_CONTEXT ObjAcquireCallWithTimeoutThread()
-{
-	static PT_void inited = NULL;
-
-	if (blpp_initOnce(&inited))
-	{
-		if (NULL == ObjThreadReleaseEvent)
-		{
-			ObjThreadReleaseEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
-			if (NULL == ObjThreadReleaseEvent)
-			{
-				blpp_initError(&inited);
-				return NULL;
-			}
-		}
-		RtlInitializeSListHead(&ObjCallWithTimeoutThreadListHead);
-		for (int i = 0; i < OBJ_QUERY_HACK_MAX_THREADS; ++i)
-		{
-			POBJ_CALL_WITH_TIMEOUT_THREAD_CONTEXT threadContext = (POBJ_CALL_WITH_TIMEOUT_THREAD_CONTEXT)blpp_mem_alloc(sizeof(OBJ_CALL_WITH_TIMEOUT_THREAD_CONTEXT));
-			if (threadContext != NULL)
-			{
-				RtlInterlockedPushEntrySList(&ObjCallWithTimeoutThreadListHead, &threadContext->ListEntry);
-			}
-		}
-		ObjCallWithTimeoutThreadInited = true;
-	}
-
-	PSLIST_ENTRY listEntry;
-
-	{
-		AutoQueuedLock al(ObjAcquireThreadLock, true);
-
-		if (NULL == (listEntry = RtlInterlockedPopEntrySList(&ObjCallWithTimeoutThreadListHead)))
-		{
-			if (WAIT_OBJECT_0 == WaitForSingleObject(ObjThreadReleaseEvent, INFINITE))
-			{
-				if (NULL == (listEntry = RtlInterlockedPopEntrySList(&ObjCallWithTimeoutThreadListHead)))
-					return NULL;
-			}
-			else
-				return NULL;
-		}
-	}
-
-	return CONTAINING_RECORD(listEntry, OBJ_CALL_WITH_TIMEOUT_THREAD_CONTEXT, ListEntry);
-}
-
-static void ObjReleaseCallWithTimeoutThread(POBJ_CALL_WITH_TIMEOUT_THREAD_CONTEXT ThreadContext)
-{
-	RtlInterlockedPushEntrySList(&ObjCallWithTimeoutThreadListHead, &ThreadContext->ListEntry);
-	SetEvent(ObjThreadReleaseEvent);
-}
-
-static DWORD WINAPI workThread(LPVOID lparam)
-{
-	POBJ_CALL_WITH_TIMEOUT_THREAD_CONTEXT threadContext = (POBJ_CALL_WITH_TIMEOUT_THREAD_CONTEXT)lparam;
-
-	// Add into internal thread.
-	LOCK_AcquireQueuedLockExclusive(&blpp_internalThreadSetLock);
-	blpp_internalThreadSet.insert(GetCurrentThreadId());
-	LOCK_ReleaseQueuedLockExclusive(&blpp_internalThreadSetLock);
-
-	threadContext->Fiber = ConvertThreadToFiber(NULL);
-	SetEvent(threadContext->CompletedEventHandle);
-
-	while (true)
-	{
-		if (WaitForSingleObject(threadContext->StartEventHandle, INFINITE) != WAIT_OBJECT_0)
-			continue;
-
-		if (threadContext->Routine)
-			threadContext->Routine(threadContext->Context);
-
-		SetEvent(threadContext->CompletedEventHandle);
-	}
-
-	return 0;
-}
-
-static NTSTATUS ObjCallWithTimeout(
-	POBJ_CALL_WITH_TIMEOUT_THREAD_CONTEXT ThreadContext,
-	PUSER_ROUTINE Routine,
-	PVOID Context,
-	DWORD Timeout)
-{
-	// Create objects if necessary.
-
-	if (NULL == ThreadContext->StartEventHandle)
-	{
-		ThreadContext->StartEventHandle = CreateEventA(NULL, FALSE, FALSE, NULL);
-		if (NULL == ThreadContext->StartEventHandle)
-			return STATUS_INSUFFICIENT_RESOURCES;
-	}
-
-	if (NULL == ThreadContext->CompletedEventHandle)
-	{
-		ThreadContext->CompletedEventHandle = CreateEventA(NULL, FALSE, FALSE, NULL);
-		if (NULL == ThreadContext->CompletedEventHandle)
-			return STATUS_INSUFFICIENT_RESOURCES;
-	}
-
-	// Create a query thread if we don't have one.
-	if (NULL == ThreadContext->ThreadHandle)
-	{
-		ResetEvent(ThreadContext->StartEventHandle);
-		ResetEvent(ThreadContext->CompletedEventHandle);
-
-		ThreadContext->ThreadHandle = CreateThread(NULL, 0, workThread, ThreadContext, 0, &ThreadContext->ThreadId);
-		if (NULL == ThreadContext->ThreadHandle)
-		{
-			return STATUS_INSUFFICIENT_RESOURCES;
-		}
-
-		// Wait for the thread to initialize.
-		WaitForSingleObject(ThreadContext->CompletedEventHandle, INFINITE);
-	}
-
-	ThreadContext->Routine = Routine;
-	ThreadContext->Context = Context;
-
-	SetEvent(ThreadContext->StartEventHandle);
-	DWORD waitResult = WaitForSingleObject(ThreadContext->CompletedEventHandle, Timeout);
-
-	ThreadContext->Routine = NULL;
-	MemoryBarrier();
-	ThreadContext->Context = NULL;
-
-	if (waitResult != WAIT_OBJECT_0)
-	{
-		// The operation timed out, or there was an error. Kill the thread.
-		// On Vista and above, the thread stack is freed automatically.
-		if (!TerminateThread(ThreadContext->ThreadHandle, ~0u))
-		{
-			TerminateThread(ThreadContext->ThreadHandle, ~0u);
-		}
-		WaitForSingleObject(ThreadContext->ThreadHandle, Timeout);
-		CloseHandle(ThreadContext->ThreadHandle);
-		ThreadContext->ThreadHandle = NULL;
-		if (ThreadContext->Fiber != NULL)
-		{
-			DeleteFiber(ThreadContext->Fiber);
-			ThreadContext->Fiber = NULL;
-		}
-		// Clean the internal thread.
-		LOCK_AcquireQueuedLockExclusive(&blpp_internalThreadSetLock);
-		blpp_internalThreadSet.erase(ThreadContext->ThreadId);
-		LOCK_ReleaseQueuedLockExclusive(&blpp_internalThreadSetLock);
-		ThreadContext->ThreadId = 0;
-
-		return STATUS_UNSUCCESSFUL;
-	}
-
-	return STATUS_SUCCESS;
-}
-
-static NTSTATUS ObjCallWithTimeout(
-	PUSER_ROUTINE Routine,
-	PVOID Context,
-	DWORD CallTimeout)
-{
-	NTSTATUS status;
-	POBJ_CALL_WITH_TIMEOUT_THREAD_CONTEXT threadContext;
-
-	if (threadContext = ObjAcquireCallWithTimeoutThread())
-	{
-		status = ObjCallWithTimeout(threadContext, Routine, Context, CallTimeout);
-		ObjReleaseCallWithTimeoutThread(threadContext);
-	}
-	else
-	{
-		status = STATUS_UNSUCCESSFUL;
-	}
-
-	return status;
-}
-
-static void ObjCommonQueryObjectRoutine(LPVOID lparam)
-{
-	POBJ_QUERY_OBJECT_COMMON_CONTEXT context = (POBJ_QUERY_OBJECT_COMMON_CONTEXT)lparam;
-
-	switch (context->Work)
-	{
-	case NtQueryObjectWork:
-		context->Status = NtQueryObject(
-			context->u.NtQueryObject.Handle,
-			context->u.NtQueryObject.ObjectInformationClass,
-			context->u.NtQueryObject.ObjectInformation,
-			context->u.NtQueryObject.ObjectInformationLength,
-			context->u.NtQueryObject.ReturnLength
-			);
-		break;
-	case NtQuerySecurityObjectWork:
-		context->Status = NtQuerySecurityObject(
-			context->u.NtQuerySecurityObject.Handle,
-			context->u.NtQuerySecurityObject.SecurityInformation,
-			context->u.NtQuerySecurityObject.SecurityDescriptor,
-			context->u.NtQuerySecurityObject.Length,
-			context->u.NtQuerySecurityObject.LengthNeeded
-			);
-		break;
-	case NtSetSecurityObjectWork:
-		context->Status = NtSetSecurityObject(
-			context->u.NtSetSecurityObject.Handle,
-			context->u.NtSetSecurityObject.SecurityInformation,
-			context->u.NtSetSecurityObject.SecurityDescriptor
-			);
-		break;
-	default:
-		context->Status = STATUS_INVALID_PARAMETER;
-		break;
-	}
-}
-
-static NTSTATUS ObjCommonQueryObjectWithTimeout(POBJ_QUERY_OBJECT_COMMON_CONTEXT Context)
-{
-	NTSTATUS status = ObjCallWithTimeout(ObjCommonQueryObjectRoutine, Context, 1000);
-
-	if (NT_SUCCESS(status))
-		status = Context->Status;
-
-	blpp_mem_free(Context);
-
-	return status;
-}
-
-static NTSTATUS ObjCallNtQueryObjectWithTimeout(
-	HANDLE Handle,
-	OBJECT_INFORMATION_CLASS ObjectInformationClass,
-	PVOID ObjectInformation,
-	ULONG ObjectInformationLength,
-	PULONG ReturnLength)
-{
-	POBJ_QUERY_OBJECT_COMMON_CONTEXT context;
-
-	context = (POBJ_QUERY_OBJECT_COMMON_CONTEXT)blpp_mem_alloc(sizeof(OBJ_QUERY_OBJECT_COMMON_CONTEXT));
-	context->Work = NtQueryObjectWork;
-	context->Status = STATUS_UNSUCCESSFUL;
-	context->u.NtQueryObject.Handle = Handle;
-	context->u.NtQueryObject.ObjectInformationClass = ObjectInformationClass;
-	context->u.NtQueryObject.ObjectInformation = ObjectInformation;
-	context->u.NtQueryObject.ObjectInformationLength = ObjectInformationLength;
-	context->u.NtQueryObject.ReturnLength = ReturnLength;
-
-	return ObjCommonQueryObjectWithTimeout(context);
-}
-
-static NTSTATUS ObjCallNtQuerySecurityObjectWithTimeout(
-	HANDLE Handle,
-	SECURITY_INFORMATION SecurityInformation,
-	PSECURITY_DESCRIPTOR SecurityDescriptor,
-	ULONG Length,
-	PULONG LengthNeeded)
-{
-	POBJ_QUERY_OBJECT_COMMON_CONTEXT context;
-
-	context = (POBJ_QUERY_OBJECT_COMMON_CONTEXT)blpp_mem_alloc(sizeof(OBJ_QUERY_OBJECT_COMMON_CONTEXT));
-	context->Work = NtQuerySecurityObjectWork;
-	context->Status = STATUS_UNSUCCESSFUL;
-	context->u.NtQuerySecurityObject.Handle = Handle;
-	context->u.NtQuerySecurityObject.SecurityInformation = SecurityInformation;
-	context->u.NtQuerySecurityObject.SecurityDescriptor = SecurityDescriptor;
-	context->u.NtQuerySecurityObject.Length = Length;
-	context->u.NtQuerySecurityObject.LengthNeeded = LengthNeeded;
-
-	return ObjCommonQueryObjectWithTimeout(context);
-}
-
-static NTSTATUS ObjCallNtSetSecurityObjectWithTimeout(
-	HANDLE Handle,
-	SECURITY_INFORMATION SecurityInformation,
-	PSECURITY_DESCRIPTOR SecurityDescriptor)
-{
-	POBJ_QUERY_OBJECT_COMMON_CONTEXT context;
-
-	context = (POBJ_QUERY_OBJECT_COMMON_CONTEXT)blpp_mem_alloc(sizeof(OBJ_QUERY_OBJECT_COMMON_CONTEXT));
-	context->Work = NtSetSecurityObjectWork;
-	context->Status = STATUS_UNSUCCESSFUL;
-	context->u.NtSetSecurityObject.Handle = Handle;
-	context->u.NtSetSecurityObject.SecurityInformation = SecurityInformation;
-	context->u.NtSetSecurityObject.SecurityDescriptor = SecurityDescriptor;
-
-	return ObjCommonQueryObjectWithTimeout(context);
+    // Create a copy of the type name.
+    LPWSTR tmpMem = (LPWSTR)blpp_mem_alloc(buffer->TypeName.Length+sizeof(WCHAR));
+    if (NULL == tmpMem)
+    {
+        status = STATUS_INSUFFICIENT_RESOURCES;
+    }
+    else
+    {
+        memcpy(tmpMem,buffer->TypeName.Buffer,buffer->TypeName.Length);
+        tmpMem[buffer->TypeName.Length/sizeof(WCHAR)] = 0;
+        TypeName = tmpMem;
+        blpp_mem_free(tmpMem);
+    }
+    blpp_mem_free(buffer);
+    return status;
 }
 
 static NTSTATUS ObjpGetObjectName
 (
     __in HANDLE Handle,
-	__in BOOLEAN WithTimeout,
     __out wstring &ObjectName
 )
 {
@@ -547,15 +252,8 @@ static NTSTATUS ObjpGetObjectName
     // A loop is needed because the I/O subsystem likes to give us the wrong return lengths...
     do
     {
-		if (WithTimeout)
-		{
-			status = ObjCallNtQueryObjectWithTimeout(Handle, ObjectNameInformation, buffer, needSize, &needSize);
-		}
-		else
-		{
-			status = NtQueryObject(Handle, ObjectNameInformation, buffer, needSize, &needSize);
-		}
-        if (STATUS_BUFFER_OVERFLOW==status || STATUS_INFO_LENGTH_MISMATCH==status || STATUS_BUFFER_TOO_SMALL==status)
+        status = NtQueryObject(Handle,ObjectNameInformation,buffer,needSize,&needSize);
+        if ((STATUS_BUFFER_OVERFLOW == status) || (STATUS_INFO_LENGTH_MISMATCH == status) || (STATUS_BUFFER_TOO_SMALL == status))
         {
             blpp_mem_free(buffer);
             needSize += 0x200;
@@ -572,7 +270,18 @@ static NTSTATUS ObjpGetObjectName
     } while (--attempts);
     if (NT_SUCCESS(status))
     {
-		ObjectName = wstring(buffer->Name.Buffer, buffer->Name.Length / sizeof(WCHAR));
+        PWSTR tmpMem = (PWSTR)blpp_mem_alloc(buffer->Name.Length+sizeof(WCHAR));
+        if (NULL == tmpMem)
+        {
+            status = STATUS_INSUFFICIENT_RESOURCES;
+        }
+        else
+        {
+            memcpy(tmpMem,buffer->Name.Buffer,buffer->Name.Length);
+            tmpMem[buffer->Name.Length/sizeof(WCHAR)] = 0;
+            ObjectName = tmpMem;
+            blpp_mem_free(tmpMem);
+        }
     }
     blpp_mem_free(buffer);
     return status;
@@ -657,7 +366,7 @@ static bool isStartWithStringW(const wstring &str,const wstring &head,bool bIgno
     }
     if (bIgnoreCase)
     {
-		for (size_t i = 0; i<len; ++i)
+        for (T_Dword i=0;i<len;++i)
         {
             if (pCheck[i]<128 && pHead[i]<128)
             {
@@ -674,7 +383,7 @@ static bool isStartWithStringW(const wstring &str,const wstring &head,bool bIgno
     }
     else
     {
-		for (size_t i = 0; i<len; ++i)
+        for (T_Dword i=0;i<len;++i)
         {
             if (pCheck[i] != pHead[i])
             {
@@ -702,14 +411,14 @@ bool ObjFormatNativeKeyName
     const static wstring hkcuString = L"HKCU";
     const static wstring hkcucrString = L"HKCU\\Software\\Classes";
     // Mark
-    static PT_void inited = NULL;
-    if (blpp_initOnce(&inited))
+    static bool inited = false;
+    if (!inited)
     {
         HANDLE Token;
         PTOKEN_USER tokenUser;
         WCHAR stringSid[MAX_PATH] = {0};
         Token = ObjpGetToken();
-        if (Token != NULL)
+        if (Token)
         {
             if (NT_SUCCESS(ObjpQueryTokenVariableSize(Token,TokenUser,(PVOID *)&tokenUser)))
             {
@@ -718,13 +427,13 @@ bool ObjFormatNativeKeyName
             }
             NtClose(Token);
         }
-        if (stringSid[0] != 0)
+        if (stringSid[0])
         {
             const static PWSTR registryUserPrefix = L"\\Registry\\User\\";
             const static PWSTR classesString = L"_Classes";
-            hkcuPrefix = registryUserPrefix;
+            hkcuPrefix.append(registryUserPrefix);
             hkcuPrefix.append(stringSid);
-            hkcucrPrefix = hkcuPrefix;
+            hkcucrPrefix.append(hkcuPrefix);
             hkcucrPrefix.append(classesString);
         }
         else
@@ -732,6 +441,7 @@ bool ObjFormatNativeKeyName
             hkcuPrefix = L"...";
             hkcucrPrefix = L"...";
         }
+        inited = true;
     }
     if (isStartWithStringW(Name,hkcrPrefix,true))
     {
@@ -817,17 +527,6 @@ void ObjUpdateDosDevicePrefixes()
             NtClose(linkHandle);
         }
     }
-}
-
-static string trim(const string& str)
-{
-	int first = 0;
-	int last = int(str.size()) - 1;
-
-	while (first <= last && isspace(str[first])) ++first;
-	while (last >= first && isspace(str[last])) --last;
-
-	return string(str, first, last - first + 1);
 }
 
 void ObjUpdateMupDevicePrefixes()
@@ -931,7 +630,7 @@ void ObjUpdateMupDevicePrefixes()
         {
             string serviceKeyName;
             serviceKeyName.append(servicesStringPart);
-			serviceKeyName.append(trim(partName));
+            serviceKeyName.append(partName);
             serviceKeyName.append(networkProviderStringPart);
             T_char DevName[OBJ_DEVICE_MUP_PREFIX_NAME_LENGTH+1];
             T_Dword DevNameLen = OBJ_DEVICE_MUP_PREFIX_NAME_LENGTH;
@@ -954,7 +653,7 @@ void ObjUpdateMupDevicePrefixes()
             {
                 DBG_PRINT("get net provider dev:"<<DevName);
                 PT_wstr pwstr;
-				if (blpp_TextEncode_AnsiToUnicode(trim(DevName).c_str(), &pwstr))
+                if (blpp_TextEncode_AnsiToUnicode(DevName,&pwstr))
                 {
                     ObjDeviceMupPrefixes[ObjDeviceMupPrefixesCount++] = pwstr;
                     blpp_mem_free(pwstr);
@@ -978,12 +677,6 @@ bool ObjResolveDevicePrefix
     __inout wstring &Name
 )
 {
-	static PT_void inited = NULL;
-	if (blpp_initOnce(&inited))
-	{
-		ObjUpdateDosDevicePrefixes();
-		ObjUpdateMupDevicePrefixes();
-	}
     T_Dword i;
     // Go through the DOS devices and try to find a matching prefix.
     for (i = 0; i < OBJ_MAX_DEVICE_COUNT; ++i)
@@ -1047,8 +740,8 @@ bool ObjGetFileName
 )
 {
     static WCHAR WindowsPath[MAX_PATH];
-    static PT_void inited = NULL;
-    if (blpp_initOnce(&inited))
+    static bool Inited = false;
+    if (!Inited)
     {
         DWORD WinPathLength = 0;
         WinPathLength = GetWindowsDirectoryW(WindowsPath,MAX_PATH);
@@ -1057,6 +750,7 @@ bool ObjGetFileName
             return false;
         }
         WindowsPath[WinPathLength] = 0;
+        Inited = true;
     }
     const static wstring simpleHeader = L"\\??\\";
     const static wstring windowsPrefix = L"\\Windows";
@@ -1093,6 +787,8 @@ bool ObjGetFileName
                     WCHAR DevLetter[] = L" :";
                     DevLetter[0] = (WCHAR)(L'A' + i);
                     bareName.replace(0,len,DevLetter);
+                    Name = bareName;
+                    return true;
                 }
             }
         }
@@ -1124,16 +820,17 @@ static NTSTATUS ObjpGetBestObjectName
     //
     // Init.
     //
-    static PT_void inited = NULL;
+    static bool inited = false;
     static DWORD ProcessQueryAccess = PROCESS_QUERY_INFORMATION;
     static DWORD ThreadQueryAccess = THREAD_QUERY_INFORMATION;
-    if (blpp_initOnce(&inited))
+    if (!inited)
     {
         if (blpp_System_IsOsAtLeast(WIN_VISTA))
         {
             ProcessQueryAccess = PROCESS_QUERY_LIMITED_INFORMATION;
             ThreadQueryAccess = THREAD_QUERY_LIMITED_INFORMATION;
         }
+        inited = true;
     }
     NTSTATUS status;
     ClientId->UniqueProcess = 0;
@@ -1194,6 +891,204 @@ static NTSTATUS ObjpGetBestObjectName
     return STATUS_SUCCESS;
 }
 
+static DWORD WINAPI ObjpQueryObjectThreadStart(__in PVOID Parameter)
+{
+    //
+    // Add into internal thread.
+    //
+    LOCK_AcquireQueuedLockExclusive(&blpp_internalThreadSetLock);
+    blpp_internalThreadSet.insert(GetCurrentThreadId());
+    LOCK_ReleaseQueuedLockExclusive(&blpp_internalThreadSetLock);
+    ObjQueryObjectFiber = ConvertThreadToFiber(NULL);
+    while (true)
+    {
+        // Wait for work.
+        if (STATUS_WAIT_0 != WaitForSingleObject(ObjQueryObjectStartEvent,INFINITE))
+        {
+            continue;
+        }
+        // Make sure we actually have work.
+        if (ObjQueryObjectContext.Initialized)
+        {
+            switch (ObjQueryObjectContext.Work)
+            {
+            case QueryNameHack:
+                ObjQueryObjectContext.Status = NtQueryObject(
+                                                   ObjQueryObjectContext.Handle,
+                                                   ObjectNameInformation,
+                                                   ObjQueryObjectContext.Buffer,
+                                                   ObjQueryObjectContext.Length,
+                                                   &ObjQueryObjectContext.ReturnLength
+                                               );
+                break;
+            case QuerySecurityHack:
+                ObjQueryObjectContext.Status = NtQuerySecurityObject(
+                                                   ObjQueryObjectContext.Handle,
+                                                   ObjQueryObjectContext.SecurityInformation,
+                                                   (PSECURITY_DESCRIPTOR)ObjQueryObjectContext.Buffer,
+                                                   ObjQueryObjectContext.Length,
+                                                   &ObjQueryObjectContext.ReturnLength
+                                               );
+                break;
+            case SetSecurityHack:
+                ObjQueryObjectContext.Status = NtSetSecurityObject(
+                                                   ObjQueryObjectContext.Handle,
+                                                   ObjQueryObjectContext.SecurityInformation,
+                                                   (PSECURITY_DESCRIPTOR)ObjQueryObjectContext.Buffer
+                                               );
+                break;
+            default:
+                ObjQueryObjectContext.Status = STATUS_NOT_SUPPORTED;
+                ObjQueryObjectContext.ReturnLength = 0;
+                break;
+            }
+            // Work done.
+            SetEvent(ObjQueryObjectCompletedEvent);
+        }
+    }
+    return 0;
+}
+
+static bool ObjpHeadQueryObjectHack()
+{
+    LOCK_AcquireQueuedLockExclusive(&ObjQueryObjectMutex);
+    // Create a query thread if we don't have one.
+    if (NULL == ObjQueryObjectThreadHandle)
+    {
+        ObjQueryObjectThreadHandle = CreateThread(NULL,0,ObjpQueryObjectThreadStart,NULL,0,&ObjQueryObjectThreadId);
+        if (NULL == ObjQueryObjectThreadHandle)
+        {
+            LOCK_ReleaseQueuedLockExclusive(&ObjQueryObjectMutex);
+            return false;
+        }
+    }
+    // Create the events if they don't exist.
+    if (NULL == ObjQueryObjectStartEvent)
+    {
+        if (NULL == (ObjQueryObjectStartEvent=CreateEvent(NULL,FALSE,FALSE,NULL)))
+        {
+            LOCK_ReleaseQueuedLockExclusive(&ObjQueryObjectMutex);
+            return false;
+        }
+    }
+    if (NULL == ObjQueryObjectCompletedEvent)
+    {
+        if (NULL == (ObjQueryObjectCompletedEvent=CreateEvent(NULL,FALSE,FALSE,NULL)))
+        {
+            LOCK_ReleaseQueuedLockExclusive(&ObjQueryObjectMutex);
+            return false;
+        }
+    }
+    return true;
+}
+
+static NTSTATUS ObjpTailQueryObjectHack(__out_opt PULONG ReturnLength)
+{
+    DWORD waitRet;
+    ObjQueryObjectContext.Initialized = TRUE;
+    // Allow the worker thread to start.
+    SetEvent(ObjQueryObjectStartEvent);
+    // Wait for the work to complete, with a timeout of 1 second.
+    waitRet = WaitForSingleObject(ObjQueryObjectCompletedEvent,1000);
+    ObjQueryObjectContext.Initialized = FALSE;
+    // Return normally if the work was completed.
+    if (STATUS_WAIT_0 == waitRet)
+    {
+        NTSTATUS status;
+        ULONG returnLength;
+        status = ObjQueryObjectContext.Status;
+        returnLength = ObjQueryObjectContext.ReturnLength;
+        LOCK_ReleaseQueuedLockExclusive(&ObjQueryObjectMutex);
+        if (ReturnLength)
+        {
+            *ReturnLength = returnLength;
+        }
+        return status;
+    }
+    // Kill the worker thread if it took too long.
+    // else if (waitRet == STATUS_TIMEOUT)
+    else
+    {
+        // Kill the thread.
+        if (!TerminateThread(ObjQueryObjectThreadHandle,~0u))
+        {
+            // Again.
+            TerminateThread(ObjQueryObjectThreadHandle,~0u);
+        }
+        ObjQueryObjectThreadHandle = NULL;
+        // Delete the fiber (and free the thread stack).
+        if (ObjQueryObjectFiber)
+        {
+            DeleteFiber(ObjQueryObjectFiber);
+            ObjQueryObjectFiber = NULL;
+        }
+        LOCK_ReleaseQueuedLockExclusive(&ObjQueryObjectMutex);
+        // Clean the internal thread.
+        LOCK_AcquireQueuedLockExclusive(&blpp_internalThreadSetLock);
+        blpp_internalThreadSet.erase(ObjQueryObjectThreadId);
+        LOCK_ReleaseQueuedLockExclusive(&blpp_internalThreadSetLock);
+        return STATUS_UNSUCCESSFUL;
+    }
+}
+
+static NTSTATUS ObjQueryObjectNameHack
+(
+    __in HANDLE Handle,
+    __out_bcount(ObjectNameInformationLength) POBJECT_NAME_INFORMATION ObjectNameInformation,
+    __in ULONG ObjectNameInformationLength,
+    __out_opt PULONG ReturnLength
+)
+{
+    if (!ObjpHeadQueryObjectHack())
+    {
+        return STATUS_UNSUCCESSFUL;
+    }
+    ObjQueryObjectContext.Work = QueryNameHack;
+    ObjQueryObjectContext.Handle = Handle;
+    ObjQueryObjectContext.Buffer = ObjectNameInformation;
+    ObjQueryObjectContext.Length = ObjectNameInformationLength;
+    return ObjpTailQueryObjectHack(ReturnLength);
+}
+
+static NTSTATUS ObjQueryObjectSecurityHack
+(
+    __in HANDLE Handle,
+    __in SECURITY_INFORMATION SecurityInformation,
+    __out_bcount(Length) PVOID Buffer,
+    __in ULONG Length,
+    __out_opt PULONG ReturnLength
+)
+{
+    if (!ObjpHeadQueryObjectHack())
+    {
+        return STATUS_UNSUCCESSFUL;
+    }
+    ObjQueryObjectContext.Work = QuerySecurityHack;
+    ObjQueryObjectContext.Handle = Handle;
+    ObjQueryObjectContext.SecurityInformation = SecurityInformation;
+    ObjQueryObjectContext.Buffer = Buffer;
+    ObjQueryObjectContext.Length = Length;
+    return ObjpTailQueryObjectHack(ReturnLength);
+}
+
+static NTSTATUS ObjSetObjectSecurityHack
+(
+    __in HANDLE Handle,
+    __in SECURITY_INFORMATION SecurityInformation,
+    __in PVOID Buffer
+)
+{
+    if (!ObjpHeadQueryObjectHack())
+    {
+        return STATUS_UNSUCCESSFUL;
+    }
+    ObjQueryObjectContext.Work = SetSecurityHack;
+    ObjQueryObjectContext.Handle = Handle;
+    ObjQueryObjectContext.SecurityInformation = SecurityInformation;
+    ObjQueryObjectContext.Buffer = Buffer;
+    return ObjpTailQueryObjectHack(NULL);
+}
+
 NTSTATUS ObjGetHandleInformation
 (
     __in HANDLE Handle,
@@ -1205,7 +1100,7 @@ NTSTATUS ObjGetHandleInformation
 )
 {
     NTSTATUS status;
-    OBJ_OBJECT_TYPE TypeEnum = OBJ_TYPE_Unknown;
+    OBJ_OBJECT_TYPE TypeEnum;
     CLIENT_ID ClientId;
     //
     // If get basic info;
@@ -1219,10 +1114,20 @@ NTSTATUS ObjGetHandleInformation
         }
     }
     // Get the type name.
-    status = ObjpGetObjectTypeName(Handle,TypeName,TypeEnum);
+    status = ObjpGetObjectTypeName(Handle,TypeName);
     if (!NT_SUCCESS(status))
     {
         return status;
+    }
+    // Decode type
+    map<WideString,OBJ_OBJECT_TYPE>::const_iterator it = ObjTypeMap.find(TypeName);
+    if (it != ObjTypeMap.end())
+    {
+        TypeEnum = it->second;
+    }
+    else
+    {
+        TypeEnum = OBJ_TYPE_Unknown;
     }
     if (ObjType)
     {
@@ -1230,34 +1135,57 @@ NTSTATUS ObjGetHandleInformation
     }
     if (OBJ_TYPE_File == TypeEnum)
     {
-#define QUERY_NORMALLY 0
-#define QUERY_WITH_TIMEOUT 1
-#define QUERY_FAIL 2
-
-		ULONG hackLevel = QUERY_WITH_TIMEOUT;
-
-		// We can't use the timeout method on XP because hanging threads can't even be terminated!
-		// But I'd like to try.
-/*
-		if (WindowsVersion <= WINDOWS_XP)
-			hackLevel = QUERY_FAIL;
-*/
-
-		if (hackLevel == QUERY_NORMALLY || hackLevel == QUERY_WITH_TIMEOUT)
-		{
-			status = ObjpGetObjectName(Handle, hackLevel == QUERY_WITH_TIMEOUT, BestObjectName);
-		}
-		else
-		{
-			// Pretend the file object has no name.
-			BestObjectName.clear();
-			status = STATUS_SUCCESS;
-		}
+        // 0: Query normally.
+        // 1: Hack.
+        // 2: Fail.
+        ULONG hackLevel = 1;
+        // We can't use the hack on XP because hanging threads
+        // can't even be terminated!
+        // But I'd like to try.
+        switch (hackLevel)
+        {
+        case 0:
+            status = ObjpGetObjectName(Handle,BestObjectName);
+            break;
+        case 1:
+            {
+                POBJECT_NAME_INFORMATION buffer;
+                buffer = (POBJECT_NAME_INFORMATION)blpp_mem_alloc(0x800);
+                if (NULL == buffer)
+                {
+                    status = STATUS_INSUFFICIENT_RESOURCES;
+                }
+                else
+                {
+                    status = ObjQueryObjectNameHack(Handle,buffer,0x800,NULL);
+                    if (NT_SUCCESS(status))
+                    {
+                        PT_wstr tmpMem = (PT_wstr)blpp_mem_alloc(buffer->Name.Length+sizeof(WCHAR));
+                        if (NULL == tmpMem)
+                        {
+                            status = STATUS_INSUFFICIENT_RESOURCES;
+                        }
+                        else
+                        {
+                            memcpy(tmpMem,buffer->Name.Buffer,buffer->Name.Length);
+                            tmpMem[buffer->Name.Length/sizeof(WCHAR)] = 0;
+                            BestObjectName = tmpMem;
+                            blpp_mem_free(tmpMem);
+                        }
+                    }
+                    blpp_mem_free(buffer);
+                }
+            }
+            break;
+        default:
+            status = STATUS_NOT_SUPPORTED;
+            break;
+        }
     }
     else
     {
         // Query the object normally.
-        status = ObjpGetObjectName(Handle,FALSE,BestObjectName);
+        status = ObjpGetObjectName(Handle,BestObjectName);
     }
     if (!NT_SUCCESS(status))
     {
@@ -1275,37 +1203,47 @@ NTSTATUS ObjGetHandleInformation
     return STATUS_SUCCESS;
 }
 
+void ObjInit()
+{
+    // Insert type map.
+    for (T_Dword i=0;TypeNameList[i];++i)
+    {
+        ObjTypeMap.insert(pair<wstring,OBJ_OBJECT_TYPE>(TypeNameList[i],(OBJ_OBJECT_TYPE)i));
+    }
+    // Init other.
+    ObjUpdateDosDevicePrefixes();
+    ObjUpdateMupDevicePrefixes();
+    ObjFormatNativeKeyName(wstring(L""));
+    ObjGetFileName(wstring(L""));
+}
+
 void ObjUninit()
 {
-	if (ObjCallWithTimeoutThreadInited)
-	{
-		// Free all threads.
-		PSLIST_ENTRY listEntry;
-		while (listEntry = RtlInterlockedPopEntrySList(&ObjCallWithTimeoutThreadListHead))
-		{
-			POBJ_CALL_WITH_TIMEOUT_THREAD_CONTEXT ThreadContext = CONTAINING_RECORD(listEntry, OBJ_CALL_WITH_TIMEOUT_THREAD_CONTEXT, ListEntry);
-			if (!TerminateThread(ThreadContext->ThreadHandle, ~0u))
-			{
-				TerminateThread(ThreadContext->ThreadHandle, ~0u);
-			}
-			WaitForSingleObject(ThreadContext->ThreadHandle, 1000);
-			CloseHandle(ThreadContext->ThreadHandle);
-			ThreadContext->ThreadHandle = NULL;
-			if (ThreadContext->Fiber != NULL)
-			{
-				DeleteFiber(ThreadContext->Fiber);
-				ThreadContext->Fiber = NULL;
-			}
-			// Clean the internal thread.
-			LOCK_AcquireQueuedLockExclusive(&blpp_internalThreadSetLock);
-			blpp_internalThreadSet.erase(ThreadContext->ThreadId);
-			LOCK_ReleaseQueuedLockExclusive(&blpp_internalThreadSetLock);
-			ThreadContext->ThreadId = 0;
-			CloseHandle(ThreadContext->StartEventHandle);
-			ThreadContext->StartEventHandle = NULL;
-			CloseHandle(ThreadContext->CompletedEventHandle);
-			ThreadContext->CompletedEventHandle = NULL;
-			blpp_mem_free(ThreadContext);
-		}
-	}
+    // Free the thread.
+    LOCK_AcquireQueuedLockExclusive(&ObjQueryObjectMutex);
+    if (ObjQueryObjectThreadHandle)
+    {
+        TerminateThread(ObjQueryObjectThreadHandle,~0u);
+        ObjQueryObjectThreadHandle = NULL;
+    }
+    if (ObjQueryObjectFiber)
+    {
+        DeleteFiber(ObjQueryObjectFiber);
+        ObjQueryObjectFiber = NULL;
+    }
+    if (ObjQueryObjectStartEvent)
+    {
+        CloseHandle(ObjQueryObjectStartEvent);
+        ObjQueryObjectStartEvent = NULL;
+    }
+    if (ObjQueryObjectCompletedEvent)
+    {
+        CloseHandle(ObjQueryObjectCompletedEvent);
+        ObjQueryObjectCompletedEvent = NULL;
+    }
+    LOCK_ReleaseQueuedLockExclusive(&ObjQueryObjectMutex);
+    // Clean the internal thread.
+    LOCK_AcquireQueuedLockExclusive(&blpp_internalThreadSetLock);
+    blpp_internalThreadSet.erase(ObjQueryObjectThreadId);
+    LOCK_ReleaseQueuedLockExclusive(&blpp_internalThreadSetLock);
 }

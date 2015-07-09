@@ -57,8 +57,6 @@ bool blpp_init()
         my_heap = NULL;
         return false;
     }
-    // Object.
-    ObjInit();
     return true;
 }
 
@@ -100,6 +98,25 @@ T_bool blpp_isInternalThread(T_Dword Tid)
 {
     AutoQueuedLock al(blpp_internalThreadSetLock);
     return (blpp_internalThreadSet.find(Tid)!=blpp_internalThreadSet.end());
+}
+
+
+//
+// Init once.
+//
+
+T_bool blpp_initOnce(PT_void volatile *inited) // Return TRUE if not initialized.
+{
+	if (_InterlockedBitTestAndSetPointer((LONG_PTR volatile *)inited, 0))
+	{
+		return FALSE;
+	}
+	return TRUE;
+}
+
+T_void blpp_initError(PT_void volatile *inited)
+{
+	_InterlockedExchangePointer(inited, 0);
 }
 
 
@@ -259,10 +276,18 @@ blpp_System_OSVersionEnum blpp_System_GetCurrentOs()
         case 2:
             return WIN_8;
 		case 3:
-			return WIN_BLUE;
+			return WIN_8_1;
         default:
             return WIN_UNKNOWN;
         }
+	case 10:
+		switch (OsVersionMinor)
+		{
+		case 0:
+			return WIN_10;
+		default:
+			return WIN_NEW;
+		}
     default:
         break;
     }
@@ -298,9 +323,17 @@ T_bool blpp_System_IsOsAtLeast(blpp_System_OSVersionEnum reqMinOS)
         major = 6;
         minor = 2;
         break;
-	case WIN_BLUE:
+	case WIN_8_1:
 		major = 6;
 		minor = 3;
+		break;
+	case WIN_10:
+		major = 10;
+		minor = 0;
+		break;
+	case WIN_NEW:
+		major = 10;
+		minor = 1;
 		break;
     default:
         break;
@@ -726,7 +759,7 @@ T_bool blpp_Tls_ClearFlag(T_address Flag)
     return ClearThreadFlag(my_tls,Flag);
 }
 
-T_bool blpp_Tls_CheckAndSetFlag(T_address Flag)
+T_bool blpp_Tls_CheckAndSetFlag(T_address Flag) // If flag is on,return FALSE.
 {
     return CheckAndSetThreadFlag(my_tls,Flag);
 }

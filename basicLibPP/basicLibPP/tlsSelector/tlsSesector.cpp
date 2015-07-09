@@ -129,7 +129,7 @@ T_bool ClearThreadFlag(T_Dword Tls,T_address Flag)
     return FALSE;
 }
 
-T_bool CheckAndSetThreadFlag(T_Dword Tls,T_address Flag)
+T_bool CheckAndSetThreadFlag(T_Dword Tls,T_address Flag) // If flag is on,return FALSE.
 {
     assert(TLS_OUT_OF_INDEXES != Tls);
     PTEB teb = (PTEB)NtCurrentTeb();

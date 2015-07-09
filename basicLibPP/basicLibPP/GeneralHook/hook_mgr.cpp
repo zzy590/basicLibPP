@@ -7,6 +7,7 @@
 
 
 #include <map>
+#include <set>
 
 using namespace std;
 
@@ -249,7 +250,6 @@ _ec:
 typedef struct _HM_FILTER
 {
     T_byte FixCode[HM_MAX_CODE_SIZE]; // Shell code must be aligned.
-    _HM_FILTER *pSelf;
     PT_void Target;
     T_bool bWork;
     PT_void Cookie;
@@ -257,9 +257,9 @@ typedef struct _HM_FILTER
 
 #include <PopPack.h>
 
-C_ASSERT(sizeof(HM_FILTER) <= 168);
-
 static map<char*,PHM_FILTER> HM_BypassFilterMap;
+static set<PT_void> HM_bypassCookies;
+static set<PT_void> HM_directCookies;
 
 
 //////////////////////////////////////////////////////////////////////////
@@ -319,7 +319,6 @@ T_status blpp_Hook_SetBypassFilter(PT_void Target,__pfn_blpp_Hook_BypassCallBack
         Status = T_STATUS_INSUFFICIENT_RESOURCES;
         goto _ec;
     }
-    pFlt->pSelf = pFlt;
     pFlt->Target = Target;
     pFlt->bWork = FALSE;
     PT_void JumpBack = NULL;
@@ -439,6 +438,7 @@ T_status blpp_Hook_SetBypassFilter(PT_void Target,__pfn_blpp_Hook_BypassCallBack
     memcpy(pFlt->FixCode,FixCode,FixCodeLength);
     // OK;
     HM_BypassFilterMap.insert(pair<char*,PHM_FILTER>((char*)Target,pFlt));
+	HM_bypassCookies.insert(pFlt);
     if (pCookie)
     {
         *pCookie = pFlt;
@@ -451,22 +451,14 @@ _ec:
 
 T_bool blpp_Hook_RemoveBypassFilter(PT_void Cookie)
 {
-    PHM_FILTER pFlt;
+    PHM_FILTER pFlt = (PHM_FILTER)Cookie;
     T_bool bRet = FALSE;
     HM_IN;
     // if cookie is ok,HM is ok.
-    try
-    {
-        pFlt = (PHM_FILTER)Cookie;
-        if (pFlt->pSelf != pFlt)
-        {
-            goto _ec;
-        }
-    }
-    catch (...)
-    {
-        goto _ec;
-    }
+	if (HM_bypassCookies.find(pFlt) == HM_bypassCookies.end())
+	{
+		goto _ec;
+	}
     // Ok,got it.
     if (pFlt->bWork)
     {
@@ -475,6 +467,7 @@ T_bool blpp_Hook_RemoveBypassFilter(PT_void Cookie)
     if (HOOK_STATUS_SUCCESS == Hook_DetourDetach(HM_HookCtx,pFlt->Cookie))
     {
         HM_BypassFilterMap.erase((char*)pFlt->Target);
+		HM_bypassCookies.erase(pFlt);
         MY_FREE(pFlt);
         bRet = TRUE;
     }
@@ -485,22 +478,14 @@ _ec:
 
 T_bool blpp_Hook_StartBypassFilter(PT_void Cookie)
 {
-    PHM_FILTER pFlt;
+	PHM_FILTER pFlt = (PHM_FILTER)Cookie;
     T_bool bRet = FALSE;
     HM_IN;
     // if cookie is ok,HM is ok.
-    try
-    {
-        pFlt = (PHM_FILTER)Cookie;
-        if (pFlt->pSelf != pFlt)
-        {
-            goto _ec;
-        }
-    }
-    catch (...)
-    {
-        goto _ec;
-    }
+	if (HM_bypassCookies.find(pFlt) == HM_bypassCookies.end())
+	{
+		goto _ec;
+	}
     if (pFlt->bWork)
     {
         bRet = TRUE;
@@ -517,22 +502,14 @@ _ec:
 
 T_bool blpp_Hook_StopBypassFilter(PT_void Cookie)
 {
-    PHM_FILTER pFlt;
+	PHM_FILTER pFlt = (PHM_FILTER)Cookie;
     T_bool bRet = FALSE;
     HM_IN;
     // if cookie is ok,HM is ok.
-    try
-    {
-        pFlt = (PHM_FILTER)Cookie;
-        if (pFlt->pSelf != pFlt)
-        {
-            goto _ec;
-        }
-    }
-    catch (...)
-    {
-        goto _ec;
-    }
+	if (HM_bypassCookies.find(pFlt) == HM_bypassCookies.end())
+	{
+		goto _ec;
+	}
     if (pFlt->bWork)
     {
         bRet = Hook_StopFilter(HM_HookCtx,pFlt->Cookie);
@@ -581,6 +558,7 @@ T_status blpp_Hook_SetDirectFilter(PT_void Target,PT_void Filter,PT_void *JumpBa
         }
         goto _ec;
     }
+	HM_directCookies.insert(Cookie);
     if (pCookie)
     {
         *pCookie = Cookie;
@@ -593,14 +571,21 @@ _ec:
 
 T_bool blpp_Hook_RemoveDirectFilter(PT_void Cookie)
 {
-    T_bool bRet;
+    T_bool bRet = FALSE;
     HM_IN;
     if (!HM_OK)
     {
-        bRet = FALSE;
         goto _ec;
     }
+	if (HM_directCookies.find(Cookie) == HM_directCookies.end())
+	{
+		goto _ec;
+	}
     bRet = (HOOK_STATUS_SUCCESS==Hook_DetourDetach(HM_HookCtx,Cookie));
+	if (bRet)
+	{
+		HM_directCookies.erase(Cookie);
+	}
 _ec:
     HM_OUT;
     return bRet;
@@ -608,13 +593,16 @@ _ec:
 
 T_bool blpp_Hook_StartDirectFilter(PT_void Cookie)
 {
-    T_bool bRet;
+    T_bool bRet = FALSE;
     HM_IN;
     if (!HM_OK)
     {
-        bRet = FALSE;
         goto _ec;
     }
+	if (HM_directCookies.find(Cookie) == HM_directCookies.end())
+	{
+		goto _ec;
+	}
     bRet = Hook_StartFilter(HM_HookCtx,Cookie);
 _ec:
     HM_OUT;
@@ -623,13 +611,16 @@ _ec:
 
 T_bool blpp_Hook_StopDirectFilter(PT_void Cookie)
 {
-    T_bool bRet;
+    T_bool bRet = FALSE;
     HM_IN;
     if (!HM_OK)
     {
-        bRet = FALSE;
         goto _ec;
     }
+	if (HM_directCookies.find(Cookie) == HM_directCookies.end())
+	{
+		goto _ec;
+	}
     bRet = Hook_StopFilter(HM_HookCtx,Cookie);
 _ec:
     HM_OUT;
@@ -638,11 +629,10 @@ _ec:
 
 T_bool blpp_Hook_FixHook(PT_Dword pCount)
 {
-    T_bool bRet;
+    T_bool bRet = FALSE;
     HM_IN;
     if (!HM_OK)
     {
-        bRet = FALSE;
         goto _ec;
     }
     bRet = Hook_FixDetour(HM_HookCtx,pCount);
@@ -653,12 +643,11 @@ _ec:
 
 T_bool blpp_Hook_IsHookContext(PT_void Ptr,T_address Length)
 {
-    T_bool bRet;
+    T_bool bRet = FALSE;
     HM_IN;
     if (!HM_OK)
     {
-        bRet = FALSE;
-        goto _ec;
+		goto _ec;
     }
     bRet = Hook_IsDetourContextMemory(HM_HookCtx,Ptr,Length);
 _ec:

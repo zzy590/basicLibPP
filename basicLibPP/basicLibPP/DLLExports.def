@@ -5,6 +5,9 @@ EXPORTS
     blpp_version
 	blpp_isInternalThread
 
+	blpp_initOnce
+	blpp_initError
+
 	blpp_Lock_InitializeQueuedLock
 	blpp_Lock_AcquireQueuedLockExclusive
 	blpp_Lock_TryAcquireQueuedLockExclusive

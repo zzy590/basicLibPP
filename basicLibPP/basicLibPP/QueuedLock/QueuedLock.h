@@ -87,7 +87,7 @@ FORCEINLINE VOID LOCK_AcquireQueuedLockShared
     __inout PBLPP_QUEUED_LOCK QueuedLock
 )
 {
-    if ((ULONG_PTR)_InterlockedCompareExchangePointer((PPVOID)&QueuedLock->Value,(PVOID)(LOCK_QUEUED_LOCK_OWNED | LOCK_QUEUED_LOCK_SHARED_INC),(PVOID)0) != 0)
+    if ((ULONG_PTR)_InterlockedCompareExchangePointer((PVOID *)&QueuedLock->Value,(PVOID)(LOCK_QUEUED_LOCK_OWNED | LOCK_QUEUED_LOCK_SHARED_INC),(PVOID)0) != 0)
     {
         LOCK_fAcquireQueuedLockShared(QueuedLock);
     }
@@ -128,7 +128,7 @@ FORCEINLINE VOID LOCK_ReleaseQueuedLockShared
 {
     ULONG_PTR value;
     value = LOCK_QUEUED_LOCK_OWNED | LOCK_QUEUED_LOCK_SHARED_INC;
-    if ((ULONG_PTR)_InterlockedCompareExchangePointer((PPVOID)&QueuedLock->Value,(PVOID)0,(PVOID)value) != value)
+    if ((ULONG_PTR)_InterlockedCompareExchangePointer((PVOID *)&QueuedLock->Value,(PVOID)0,(PVOID)value) != value)
     {
         LOCK_fReleaseQueuedLockShared(QueuedLock);
     }

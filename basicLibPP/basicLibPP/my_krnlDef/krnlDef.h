@@ -15,8 +15,6 @@ extern "C" {
 
 // Synchronization
 
-typedef PVOID *PPVOID;
-
 FORCEINLINE LONG_PTR _InterlockedExchangeAddPointer(
 	_Inout_ _Interlocked_operand_ LONG_PTR volatile *Addend,
 	_In_ LONG_PTR Value
