@@ -64,6 +64,7 @@ void tmpMemFree(void *p,void *address);
 
 T_Dword blpp_version();
 T_bool blpp_isInternalThread(T_Dword Tid);
+T_Dword blpp_getMemoryAllocationCount();
 
 T_bool blpp_initOnce(PT_void volatile *inited); // Return TRUE if not initialized.
 T_void blpp_initError(PT_void volatile *inited);

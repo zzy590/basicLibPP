@@ -4,6 +4,7 @@ LIBRARY      basicLibPP
 EXPORTS
     blpp_version
 	blpp_isInternalThread
+	blpp_getMemoryAllocationCount
 
 	blpp_initOnce
 	blpp_initError
@@ -80,6 +81,7 @@ EXPORTS
 	DisEng_SetCpuType
 	DisEng_Disasm
 
+	blpp_Hook_FlushMemory
 	blpp_Hook_AddThread
 	blpp_Hook_RemoveThread
 	blpp_Hook_RefreshThread

@@ -17,6 +17,9 @@ static mspace my_heap = NULL;
 static T_Dword OsVersionMajor;
 static T_Dword OsVersionMinor;
 
+static T_Dword blpp_memoryAllocationCount = 0;
+static BLPP_QUEUED_LOCK blpp_memoryAllocationCountLock = BLPP_QUEUED_LOCK_INIT;
+
 set<T_Dword> blpp_internalThreadSet;
 BLPP_QUEUED_LOCK blpp_internalThreadSetLock = BLPP_QUEUED_LOCK_INIT;
 
@@ -100,6 +103,12 @@ T_bool blpp_isInternalThread(T_Dword Tid)
     return (blpp_internalThreadSet.find(Tid)!=blpp_internalThreadSet.end());
 }
 
+T_Dword blpp_getMemoryAllocationCount()
+{
+	AutoQueuedLock al(blpp_memoryAllocationCountLock);
+	return blpp_memoryAllocationCount;
+}
+
 
 //
 // Init once.
@@ -173,23 +182,42 @@ PT_void blpp_mem_alloc(size_t size)
 {
     void *ptr;
     ptr = mspace_malloc(my_heap,size);
-    if (ptr)
+    if (ptr != NULL)
     {
         ZeroMemory(ptr,size);
+		LOCK_AcquireQueuedLockExclusive(&blpp_memoryAllocationCountLock);
+		++blpp_memoryAllocationCount;
+		LOCK_ReleaseQueuedLockExclusive(&blpp_memoryAllocationCountLock);
     }
     return ptr;
 }
 
 PT_void blpp_mem_realloc(PT_void ptr,size_t newsize)
 {
-    return mspace_realloc(my_heap,ptr,newsize);
+    void *newPtr = mspace_realloc(my_heap,ptr,newsize);
+	if (NULL == ptr && newPtr != NULL)
+	{
+		LOCK_AcquireQueuedLockExclusive(&blpp_memoryAllocationCountLock);
+		++blpp_memoryAllocationCount;
+		LOCK_ReleaseQueuedLockExclusive(&blpp_memoryAllocationCountLock);
+	}
+	else if (ptr != NULL && NULL == newPtr)
+	{
+		LOCK_AcquireQueuedLockExclusive(&blpp_memoryAllocationCountLock);
+		--blpp_memoryAllocationCount;
+		LOCK_ReleaseQueuedLockExclusive(&blpp_memoryAllocationCountLock);
+	}
+	return newPtr;
 }
 
 T_void blpp_mem_free(PT_void ptr)
 {
     if (ptr)
     {
-        mspace_free(my_heap,ptr);
+		mspace_free(my_heap, ptr);
+		LOCK_AcquireQueuedLockExclusive(&blpp_memoryAllocationCountLock);
+		--blpp_memoryAllocationCount;
+		LOCK_ReleaseQueuedLockExclusive(&blpp_memoryAllocationCountLock);
     }
 }
 

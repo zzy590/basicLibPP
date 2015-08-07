@@ -20,6 +20,7 @@
 
 BASIC_LIB_PP_API T_Dword blpp_version();
 BASIC_LIB_PP_API T_bool blpp_isInternalThread(T_Dword Tid);
+BASIC_LIB_PP_API T_Dword blpp_getMemoryAllocationCount();
 
 //
 // Init once.
@@ -294,6 +295,8 @@ BASIC_LIB_PP_API int DisEng_Disasm(PZZY_DIS_CONTEXT pContext,T_Qword base,T_Qwor
 
 typedef T_void (__stdcall * __pfn_blpp_Hook_BypassCallBack)(PT_void Param,PBLPP_HOOK_INFO pInfo);
 typedef PT_void (__stdcall * __pfn_blpp_Hook_SmartCallBack)(PT_void Param,PT_void eax_rax); // return to change eax/rax
+
+BASIC_LIB_PP_API T_void blpp_Hook_FlushMemory();
 
 BASIC_LIB_PP_API T_bool blpp_Hook_AddThread(T_Dword TID); // Auto called at DllMain.(If LoadLibrary you should add existing threads.)
 BASIC_LIB_PP_API T_bool blpp_Hook_RemoveThread(T_Dword TID); // Auto called at DllMain.

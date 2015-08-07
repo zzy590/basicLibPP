@@ -112,7 +112,7 @@ static BLPP_QUEUED_LOCK ObjDevicePrefixLock = BLPP_QUEUED_LOCK_INIT;
 //
 
 static bool ObjCallWithTimeoutThreadInited = false;
-static SLIST_HEADER ObjCallWithTimeoutThreadListHead;
+static SLIST_HEADER ObjCallWithTimeoutThreadListHead = {0};
 static HANDLE ObjThreadReleaseEvent = NULL;
 static BLPP_QUEUED_LOCK ObjAcquireThreadLock = BLPP_QUEUED_LOCK_INIT;
 

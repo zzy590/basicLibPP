@@ -64,6 +64,8 @@ typedef PT_void (__stdcall * __pfn_blpp_Hook_SmartCallBack)(PT_void Param,PT_voi
 //////////////////////////////////////////////////////////////////////////
 
 
+T_void blpp_Hook_FlushMemory();
+
 T_bool blpp_Hook_AddThread(T_Dword TID);
 T_bool blpp_Hook_RemoveThread(T_Dword TID);
 T_bool blpp_Hook_RefreshThread();

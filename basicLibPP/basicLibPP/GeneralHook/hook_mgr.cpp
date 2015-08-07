@@ -74,6 +74,18 @@ static map<T_Dword,bool> HM_Thread;                        // Map to save thread
 //////////////////////////////////////////////////////////////////////////
 
 
+// Memory operation.
+
+T_void blpp_Hook_FlushMemory()
+{
+	HM_IN;
+	if (HM_OK)
+	{
+		Hook_FlushMemory(HM_HookCtx);
+	}
+	HM_OUT;
+}
+
 // Thread operation.
 
 T_bool blpp_Hook_AddThread(T_Dword TID)
