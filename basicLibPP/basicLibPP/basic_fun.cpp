@@ -371,7 +371,7 @@ T_bool blpp_System_IsOsAtLeast(blpp_System_OSVersionEnum reqMinOS)
 
 T_bool blpp_System_Is64BitOs()
 {
-#if Config_Mem64_Mode
+#if defined(_WIN64)
     return TRUE;
 #else
     static T_bool is64 = FALSE;
