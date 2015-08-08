@@ -110,7 +110,7 @@ public:
     }
     T_status getData(PT_void out,PT_Dword len) const
     {
-        if (*len > m_length)
+        if (*len >= m_length)
         {
             memcpy(out,m_data,m_length);
             *len = m_length;
