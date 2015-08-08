@@ -973,10 +973,7 @@ void ObjUpdateMupDevicePrefixes()
     blpp_mem_free(providerOrder);
 }
 
-bool ObjResolveDevicePrefix
-(
-    __inout wstring &Name
-)
+static void internalInitPrefix()
 {
 	static PT_void inited = NULL;
 	if (blpp_initOnce(&inited))
@@ -984,6 +981,14 @@ bool ObjResolveDevicePrefix
 		ObjUpdateDosDevicePrefixes();
 		ObjUpdateMupDevicePrefixes();
 	}
+}
+
+bool ObjResolveDevicePrefix
+(
+    __inout wstring &Name
+)
+{
+	internalInitPrefix();
     T_Dword i;
     // Go through the DOS devices and try to find a matching prefix.
     for (i = 0; i < OBJ_MAX_DEVICE_COUNT; ++i)
@@ -1046,6 +1051,7 @@ bool ObjGetFileName
     __inout wstring &Name
 )
 {
+	internalInitPrefix();
     static WCHAR WindowsPath[MAX_PATH];
     static PT_void inited = NULL;
     if (blpp_initOnce(&inited))
