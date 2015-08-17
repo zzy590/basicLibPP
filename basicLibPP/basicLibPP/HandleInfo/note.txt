@@ -1,1 +1,3 @@
 svn last change 15:51:44, 2015年6月10日
+
+svm: 6179 14:10:56, 2015年8月16日 Upgrade all projects to VS 2015 (almost all by dmex) PtrToUlong
