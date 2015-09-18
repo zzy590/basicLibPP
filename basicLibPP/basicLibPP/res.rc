@@ -1,8 +1,8 @@
 
 #include "windows.h"
 
-#define MY_VERSION_S "1.0.1.0\0"
-#define MY_VERSION_V 1,0,1,0
+#define MY_VERSION_S "1.0.1.1\0"
+#define MY_VERSION_V 1,0,1,1
 
 VS_VERSION_INFO VERSIONINFO
  FILEVERSION MY_VERSION_V

@@ -35,7 +35,7 @@ using namespace std;
 //////////////////////////////////////////////////////////////////////////
 
 
-#define VERSION_ZZY ((T_Dword)1000100)
+#define VERSION_ZZY ((T_Dword)1000101)
 
 #ifdef Config_DBG
     #define DBG_PRINT(_x) cout<<_x<<endl;
