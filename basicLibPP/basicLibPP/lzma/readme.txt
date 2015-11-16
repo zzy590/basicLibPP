@@ -9,3 +9,4 @@ update to 15.07 use lzma2
 update to 15.08 use lzma2
 update to 15.09 use lzma2
 update to 15.10 use lzma2 (identical to 15.09)
+update to 15.11 use lzma2
