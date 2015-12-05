@@ -379,6 +379,10 @@ static NTSTATUS ObjCallWithTimeout(
 			TerminateThread(ThreadContext->ThreadHandle, ~0u);
 		}
 		WaitForSingleObject(ThreadContext->ThreadHandle, Timeout);
+		// Clean the internal thread.
+		LOCK_AcquireQueuedLockExclusive(&blpp_internalThreadSetLock);
+		blpp_internalThreadSet.erase(ThreadContext->ThreadId);
+		LOCK_ReleaseQueuedLockExclusive(&blpp_internalThreadSetLock);
 		CloseHandle(ThreadContext->ThreadHandle);
 		ThreadContext->ThreadHandle = NULL;
 		if (ThreadContext->Fiber != NULL)
@@ -386,10 +390,6 @@ static NTSTATUS ObjCallWithTimeout(
 			DeleteFiber(ThreadContext->Fiber);
 			ThreadContext->Fiber = NULL;
 		}
-		// Clean the internal thread.
-		LOCK_AcquireQueuedLockExclusive(&blpp_internalThreadSetLock);
-		blpp_internalThreadSet.erase(ThreadContext->ThreadId);
-		LOCK_ReleaseQueuedLockExclusive(&blpp_internalThreadSetLock);
 		ThreadContext->ThreadId = 0;
 
 		return STATUS_UNSUCCESSFUL;
@@ -1295,6 +1295,10 @@ void ObjUninit()
 				TerminateThread(ThreadContext->ThreadHandle, ~0u);
 			}
 			WaitForSingleObject(ThreadContext->ThreadHandle, 1000);
+			// Clean the internal thread.
+			LOCK_AcquireQueuedLockExclusive(&blpp_internalThreadSetLock);
+			blpp_internalThreadSet.erase(ThreadContext->ThreadId);
+			LOCK_ReleaseQueuedLockExclusive(&blpp_internalThreadSetLock);
 			CloseHandle(ThreadContext->ThreadHandle);
 			ThreadContext->ThreadHandle = NULL;
 			if (ThreadContext->Fiber != NULL)
@@ -1302,10 +1306,6 @@ void ObjUninit()
 				DeleteFiber(ThreadContext->Fiber);
 				ThreadContext->Fiber = NULL;
 			}
-			// Clean the internal thread.
-			LOCK_AcquireQueuedLockExclusive(&blpp_internalThreadSetLock);
-			blpp_internalThreadSet.erase(ThreadContext->ThreadId);
-			LOCK_ReleaseQueuedLockExclusive(&blpp_internalThreadSetLock);
 			ThreadContext->ThreadId = 0;
 			CloseHandle(ThreadContext->StartEventHandle);
 			ThreadContext->StartEventHandle = NULL;
