@@ -1203,6 +1203,7 @@ static NTSTATUS ObjpGetBestObjectName
 NTSTATUS ObjGetHandleInformation
 (
     __in HANDLE Handle,
+	__in BOOL bCanWait,
     __out_opt POBJECT_BASIC_INFORMATION BasicInformation,
     __out_opt OBJ_OBJECT_TYPE *ObjType,
     __out wstring &TypeName,
@@ -1236,6 +1237,9 @@ NTSTATUS ObjGetHandleInformation
     }
     if (OBJ_TYPE_File == TypeEnum)
     {
+		if (!bCanWait)
+			return STATUS_NOT_SUPPORTED;
+
 #define QUERY_NORMALLY 0
 #define QUERY_WITH_TIMEOUT 1
 #define QUERY_FAIL 2

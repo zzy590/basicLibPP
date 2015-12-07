@@ -623,6 +623,7 @@ T_bool blpp_Object_GetFormattedKeyName(PCT_wstr strIn,PT_wstr strOut,T_Dword out
 T_bool blpp_Object_QueryHandleInfo
 (
     HANDLE Handle,
+	T_bool bCanWait,
     OBJ_OBJECT_TYPE *ObjType,
     PT_Dword refCount,
     PT_wstr nameOut,
@@ -677,7 +678,7 @@ T_bool blpp_Object_QueryHandleInfo
             *TID = GetCurrentThreadId();
         }
     }
-    st = ObjGetHandleInformation(Handle,&objInfo,ObjType,typeName,bestName,&cid);
+    st = ObjGetHandleInformation(Handle,bCanWait,&objInfo,ObjType,typeName,bestName,&cid);
     if (!NT_SUCCESS(st))
     {
         return FALSE;

@@ -66,6 +66,7 @@ bool ObjFormatNativeKeyName(__inout wstring &Name);
 NTSTATUS ObjGetHandleInformation
 (
     __in HANDLE Handle,
+	__in BOOL bCanWait,
     __out_opt POBJECT_BASIC_INFORMATION BasicInformation,
     __out_opt OBJ_OBJECT_TYPE *ObjType,
     __out wstring &TypeName,

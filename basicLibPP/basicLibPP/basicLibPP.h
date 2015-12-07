@@ -211,7 +211,7 @@ typedef enum _OBJ_OBJECT_TYPE
 BASIC_LIB_PP_API T_void blpp_Object_RefreshPrefix();
 BASIC_LIB_PP_API T_bool blpp_Object_GetFormattedFileName(PCT_wstr strIn,PT_wstr strOut,T_Dword outSize);
 BASIC_LIB_PP_API T_bool blpp_Object_GetFormattedKeyName(PCT_wstr strIn,PT_wstr strOut,T_Dword outSize);
-BASIC_LIB_PP_API T_bool blpp_Object_QueryHandleInfo(HANDLE Handle,OBJ_OBJECT_TYPE *ObjType,PT_Dword refCount,PT_wstr nameOut,T_Dword outSize,PT_Dword PID,PT_Dword TID);
+BASIC_LIB_PP_API T_bool blpp_Object_QueryHandleInfo(HANDLE Handle,T_bool bCanWait,OBJ_OBJECT_TYPE *ObjType,PT_Dword refCount,PT_wstr nameOut,T_Dword outSize,PT_Dword PID,PT_Dword TID);
 
 //
 // MD5 database.
